@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,9 @@ The games queue page defaults to showing only unposted games, clicking the "post
 1. The game queue screen.
 
 == Changelog ==
+
+= 1.0.4 =
+*Fixed the url on settings screen FOR REAL this time
 
 = 1.0.3 =
 *Fixed the url on settings screen for your plugin file to point to the correct file
