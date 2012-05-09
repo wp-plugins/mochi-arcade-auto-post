@@ -98,7 +98,7 @@ class mAAPOptions
 
 		<?php
 		$uri = plugins_url('mochiArcadeAutoPost.php', dirname(__FILE__));
-		$uri .= 'mochiArcadeAutoPost.php?maappw=';
+		$uri .= '/mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=';
 		$uri .= $this->options['maappw'];
 		?>
 		<p>Copy and paste <code><?php echo $uri;?></code> to your <a href="https://www.mochimedia.com/pub/settings">Mochimedia publisher settings</a> page auto post url textbox, and change Auto Post Method to `Custom built script`.</p>
