@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,7 +21,7 @@ Mochi Arcade Auto Post is designed to help bloggers add a few mochi arcade games
 3. Go to http://www.mochimedia.com and create a publisher's account.
 4. Go to https://www.mochimedia.com/pub/settings and scroll down to Auto Post Settings
 5. Enter the web address of `mochiArcadeAutoPost.php` in the Auto Post URL section
-eg. http://www.example.com/wp-content/plugins/mochi-Arcade-Auto-Post/mochiArcadeAutoPost.php
+eg. http://www.example.com/wp-content/plugins/mochiArcadeAutoPost/mochiArcadeAutoPost.php
 6. Copy your publisher ID, and paste it into the form on the plugin's settings page. (dashboard->settings->Mochi Arcade Auto Post
 7. Pick a game from http://www.mochimedia.com and click "post game to my site"
 8. Go to your Dashboard->posts->Mochi Games Queue and click "post and publish" or "post"

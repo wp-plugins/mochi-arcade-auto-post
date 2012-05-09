@@ -18,6 +18,8 @@ class mAAPOptions
 			$this->options['autoPostSWF'] = 'page';
 		if(!array_key_exists('publisher_id', $this->options))
 			$this->options['publisher_id'] = 'paste your mochi publisher id here';
+		if(!array_key_exists('maappw', $this->options))
+			$this->options['maappw'] = 'password';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -61,6 +63,7 @@ class mAAPOptions
 							  array(&$this, 'generalText'),			//Displays in section
 							 $this->pluginName.'OptionsPage');		//settings page id
 
+
 		add_settings_field('mochiPublisherID',				//field ID
 						   'Mochi Publisher ID',			//field title
 						   array(&$this, 'publisherIDBox'),	//callback to display input box
@@ -73,11 +76,33 @@ class mAAPOptions
 						   $this->pluginName.'OptionsPage',		//Page ID
 						   'mochiAPGeneral');				//Section ID
 
+		add_settings_field('maappw',
+						   '<strong>password</strong>',
+							array(&$this, 'setMAAPPW'),
+							$this->pluginName.'OptionsPage',
+						   'mochiAPGeneral');
+
 //		add_settings_field('min_privs',				//field ID
 //						   'Who can manage games?',			//field title
 //						   array(&$this, 'min_privs'),	//callback to display input box
 //						   $this->pluginName.'OptionsPage',	//Page ID
 //						   'mochiAPPublisherData');			//Section ID
+	}
+	public function setMAAPPW()
+	{
+		?>
+		<p>
+			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[maappw]';?>" value="<?php echo $this->options['maappw'];?>" />
+		</p>
+		<p>This is a unique password to prevent unauthorized users from adding mochi games to your games queue.</p>
+
+		<?php
+		$uri = plugins_url('mochiArcadeAutoPost.php', dirname(__FILE__));
+		$uri .= 'mochiArcadeAutoPost.php?maappw=';
+		$uri .= $this->options['maappw'];
+		?>
+		<p>Copy and paste <code><?php echo $uri;?></code> to your <a href="https://www.mochimedia.com/pub/settings">Mochimedia publisher settings</a> page auto post url textbox, and change Auto Post Method to `Custom built script`.</p>
+		<?php
 	}
 	public function generalText()
 	{
@@ -87,10 +112,10 @@ class mAAPOptions
 	{
 		?>
 		<p>
-			<input type="radio" name="<?php echo $this->pluginName; ?>Options[autoPostSWF]" value="page"<?php if($this->options['autoPostSWF']=='page') echo ' checked'; ?>> Embed on post page
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[autoPostSWF]" value="page"<?php if($this->options['autoPostSWF']=='page') echo ' checked'; ?>/> Embed on post page
 		</p>
 		<p>
-			<input type="radio" name="<?php echo $this->pluginName; ?>Options[autoPostSWF]" value="link"<?php if($this->options['autoPostSWF']=='link') echo ' checked'; ?>> Link to SWF file on post page
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[autoPostSWF]" value="link"<?php if($this->options['autoPostSWF']=='link') echo ' checked'; ?>/> Link to SWF file on post page
 		</p>
 		<p>
 			We recommend embedding the SWF on the page, as this allows the javascript for mochi bridge to be embeded as well, giving you access to high scores and other data/options through the mochi website.<br />
@@ -108,14 +133,15 @@ class mAAPOptions
 		echo '<p><input id=\'mochiPublisherID\' name=\''.$this->pluginName.'Options[publisher_id]\' size=\'40\' type=\'text\' value=\''.$this->options['publisher_id'].'\' />';
 		echo 'Your publisher ID from <a href="https://www.mochimedia.com/pub/settings">Mochimedia</a>';
 		echo '<p>To allow communication of high scores and other data, you should also create a file in your website\'s root called crossdomain.xml and paste the following into it <br/>
-		<code><br/>
+		</p><p>
+		<code>
 		&lt;?xml version="1.0"?&gt;<br/>
 	    &lt;!DOCTYPE cross-domain-policy SYSTEM "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd"&gt;<br/>
 	    &lt;cross-domain-policy&gt;<br/>
 	    &lt;allow-access-from domain="x.mochiads.com" /&gt;<br/>
 		&lt;allow-access-from domain="www.mochiads.com" /&gt;<br/>
 		&lt;allow-access-from domain="www.mochimedia.com" /&gt;<br/>
-	    &lt;/cross-domain-policy&gt;<br/>
+	    &lt;/cross-domain-policy&gt;
 		</code>
 		</p>';
 		echo '<p>Or if you already have a crossdomain.xml file, modify it accordingly.  This will allow mochi bridge to function, but is not strictly necessary for the games themselves.</p>';

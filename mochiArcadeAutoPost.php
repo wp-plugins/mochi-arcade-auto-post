@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.0.1
+Version: 1.0.2
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2
@@ -103,6 +103,7 @@ class mochiArcadeAutoPost
 				//you hopefully can figure out how to modify this too. :P
 				//add /?game_tag=theGameTag to the end of that URI
 				$uriRedirect .= '/?game_tag=' . $_REQUEST['game_tag'];
+				$uriRedirect .= '&maappw=' . $_REQUEST['maappw'];
 
 				//access the completed URI
 				if($GLOBALS['HTTP_SERVER_VARS']['https'])
@@ -150,6 +151,7 @@ class mochiArcadeAutoPost
 		$queryVars[] = 'mochi_action'; //do this action
 		$queryVars[] = 'mochi_list';  //used by listGames() to determine which games to list
 		$queryVars[] = 'mochi_nonce'; //used on admin page for nonce value
+		$queryVars[] = 'maappw';
 		return $queryVars;
 	}
 	/*
@@ -160,8 +162,9 @@ class mochiArcadeAutoPost
 	{
 		//gets the game tag from the query
 		$gameTag = get_query_var('game_tag');
+		$maappw = get_query_var('maappw');
 		//checks if game_tag was set
-		if($gameTag != '')
+		if($gameTag != '' && $maappw == $this->mochiAutoPostOptions->options['maappw'])
 		{
 			$urlrequest = 'http://www.mochiads.com/feeds/games/'.$this->mochiAutoPostOptions->options['publisher_id'].'/'.$gameTag.'/?format=json';
 			$gamearr = file_get_contents($urlrequest);
