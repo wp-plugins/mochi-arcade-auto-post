@@ -98,6 +98,7 @@ class mAAPOptions
 
 		<?php
 		$uri = plugins_url('mochiArcadeAutoPost.php', dirname(__FILE__));
+		$uri = dirname('mochiArcadeAutoPost.php');
 		$uri .= '/mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=';
 		$uri .= $this->options['maappw'];
 		?>

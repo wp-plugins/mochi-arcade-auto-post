@@ -61,6 +61,13 @@ The games queue page defaults to showing only unposted games, clicking the "post
 
 == Changelog ==
 
+= 1.0.3 =
+*Fixed the url on settings screen for your plugin file to point to the correct file
+
+= 1.0.2 =
+*Made the settings screen more user friendly
+*Added a password function
+
 = 1.0.1 =
 * The plugin now works. (v 1.0.0 didn't, which is why it was never released :P)
 
