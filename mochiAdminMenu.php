@@ -297,7 +297,7 @@ class mochiAdminMenu
 	public function listGames()
 	{
 		global $wpdb;
-		define(numGames, 100);
+		define('numGames', 100);
 		if(isset($_REQUEST['mochi_list']))
 		{
 			$requested = $_REQUEST['mochi_list'];
