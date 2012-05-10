@@ -191,12 +191,13 @@ class mochiAdminMenu
                     $i++;
                 }
             }
+			//create post
 			$keywd .= ',mAAPBS';
 			$postContent = '<p>[mochigame game_tag='.$game_tag.']</p>';
 			$postContent .= '<p>'.$game[0]['description'].'</p>';
 			if($game[0]['description'] != $game[0]['instructions'])
 				$postContent .= '<p>'.$game[0]['instructions'].'</p>';
-
+			//setup post array
 			if($publish)
 			{
 				$post = array(
@@ -221,12 +222,14 @@ class mochiAdminMenu
 				'tags_input' => $keywd
 							);
 			}
+			//insert post
 			$post_id = wp_insert_post($post);
-			
+
+			//download thumbnail
 			$url = $game[0]['thumbnail_url'];
             $tmp = download_url( $url );
             $file_array = array(
-                'name' => $game[0]['game_tag'].basename( $url ),
+                'name' => $this->_sanitize_title( $game[0]['game_tag'].'_'.basename( $url )),
                 'tmp_name' => $tmp
             );
 
@@ -250,7 +253,7 @@ class mochiAdminMenu
 			$url = $game[0]['swf_url'];
             $tmp = download_url( $url );
             $file_array = array(
-                'name' => $game[0]['game_tag'].'_'.basename( $url ),
+                'name' => $this->_sanitize_title( $game[0]['game_tag'].'_'.basename( $url )),
                 'tmp_name' => $tmp
             );
 
@@ -277,6 +280,13 @@ class mochiAdminMenu
 		$this->listGames();
 		return 0;
 	}
+	//removes % characters before sending to sanitize_title
+	public function _sanitize_title($string)
+	{
+		$string = str_replace('%20','-', $string);
+		$string = str_replace('%', '', $string);
+		return $string;
+	}
 	public function new_attachment($att_id)
 	{
 		//get post id
@@ -287,6 +297,7 @@ class mochiAdminMenu
 	public function listGames()
 	{
 		global $wpdb;
+		define(numGames, 100);
 		if(isset($_REQUEST['mochi_list']))
 		{
 			$requested = $_REQUEST['mochi_list'];
@@ -309,7 +320,7 @@ class mochiAdminMenu
 		<?php
 
 		//initialize data from the database
-		$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY generated DESC LIMIT 100 OFFSET 0;"), ARRAY_A);
+		$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY generated DESC LIMIT %d OFFSET 0;", numGames), ARRAY_A);
 
 
 		//initial rowOffset is 0
@@ -483,9 +494,9 @@ class mochiAdminMenu
 				else $game = NULL;
 			}
 			//assume 100 rows were processed
-			$rowOffset += 100;
+			$rowOffset += numGames;
 			//fetch next result set
-			$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY id ASC LIMIT 100 OFFSET %d;", $rowOffset), ARRAY_A);
+			$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY id DESC LIMIT %d OFFSET %d;", numGames, $rowOffset), ARRAY_A);
 			//The purpose of doing it this way is to support a virtually limitless number of games, if I fetched them all at once, typical shared hosting would
 			//eventually shut the script down for over-stepping its memory allocation.
 			//Even though the intended usage of this plugin should never see more than a few games in the queue, it's better safe than sorry.

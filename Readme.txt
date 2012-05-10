@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.4
+Stable tag: 1.0.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,11 @@ The games queue page defaults to showing only unposted games, clicking the "post
 
 == Changelog ==
 
+= 1.0.5 =
+* Fixed swfs with sanitized names in the style 'name%20with%20spaces' to re-sanitize in a more wordpress-friendly formate eg: 'name-with-spaces' Additionally any other % codes simply have the % removed.
+* Fixed a bug causing the game queue to improperly list games when there are more than 100 in the queue.
+* Added an option to hide posts created by this plugin so they don't appear on the home page (but still appear in archives).
+
 = 1.0.4 =
 * Fixed the url on settings screen FOR REAL this time
 
@@ -75,8 +80,6 @@ The games queue page defaults to showing only unposted games, clicking the "post
 * The plugin now works. (v 1.0.0 didn't, which is why it was never released :P)
 
 == Features ==
-
-Unordered list:
 
 * Adds information about mochi games to your database
 * Creates posts to display said games

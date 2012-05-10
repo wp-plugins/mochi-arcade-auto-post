@@ -13,13 +13,18 @@ class mAAPOptions
 		//get current options.
 		$this->pluginName = $pluginName;
 		$this->options = get_option($this->pluginName.'Options');
+		//Make it a valid array for below functions even if get_option returned nothing
 		$this->options['initialized'] = true;
+
+		//set defaults
 		if(!array_key_exists('autoPostSWF', $this->options))
 			$this->options['autoPostSWF'] = 'page';
 		if(!array_key_exists('publisher_id', $this->options))
 			$this->options['publisher_id'] = 'paste your mochi publisher id here';
 		if(!array_key_exists('maappw', $this->options))
 			$this->options['maappw'] = 'password';
+		if(!array_key_exists('gamesOnHomePage', $this->options))
+			$this->options['gamesOnHomePage'] = 'yes';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -62,6 +67,12 @@ class mAAPOptions
 							  'General',							//title of the section
 							  array(&$this, 'generalText'),			//Displays in section
 							 $this->pluginName.'OptionsPage');		//settings page id
+		
+		add_settings_section( 'mochiGamesVisibility',						//unique id for section
+							  'Game Visibility',							//title of the section
+							  array(&$this, 'visText'),			//Displays in section
+							 $this->pluginName.'OptionsPage');		//settings page id
+
 
 
 		add_settings_field('mochiPublisherID',				//field ID
@@ -76,17 +87,36 @@ class mAAPOptions
 						   $this->pluginName.'OptionsPage',		//Page ID
 						   'mochiAPGeneral');				//Section ID
 
-		add_settings_field('maappw',
-						   '<strong>password</strong>',
-							array(&$this, 'setMAAPPW'),
-							$this->pluginName.'OptionsPage',
-						   'mochiAPGeneral');
+		add_settings_field('maappw',						//field ID
+						   '<strong>password</strong>',		//field title
+							array(&$this, 'setMAAPPW'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//Page ID
+						   'mochiAPGeneral');				//Section ID
 
-//		add_settings_field('min_privs',				//field ID
-//						   'Who can manage games?',			//field title
-//						   array(&$this, 'min_privs'),	//callback to display input box
-//						   $this->pluginName.'OptionsPage',	//Page ID
-//						   'mochiAPPublisherData');			//Section ID
+		add_settings_field('gamesOnHomePage',				//field ID
+							'Show game posts on home page?',	//field title
+							array(&$this, 'hideHome'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//page ID
+							'mochiGamesVisibility'			//Section ID
+							);
+	}
+	public function visText()
+	{
+		echo '<p>Game Visibility</p>';
+	}
+	public function hideHome()
+	{
+		?>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[gamesOnHomePage]" value="yes"<?php if($this->options['gamesOnHomePage']=='yes') echo ' checked'; ?>/> Show on home page
+		</p>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[gamesOnHomePage]" value="no"<?php if($this->options['gamesOnHomePage']=='no') echo ' checked'; ?>/> Hide on home page
+		</p>
+		<p>
+			Games can still be accessed through categories, with the category stub "flash-games" containing all of them as sub categories.
+		</p>
+		<?php
 	}
 	public function setMAAPPW()
 	{

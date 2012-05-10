@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.0.4
+Version: 1.0.5
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2
@@ -72,6 +72,9 @@ class mochiArcadeAutoPost
 				add_action('pre_get_posts', array(&$this, 'runPlugin'), 0);
 			else
 				new mochiAdminMenu($this);
+
+			if($this->mochiAutoPostOptions->options['gamesOnHomePage'] == 'no')
+					add_filter('pre_get_posts', array(&$this, 'hideGames'));
 
 
 			//load_plugin_textdomain($this->pluginName, false, basename( dirname( __FILE__ ) ) . '/languages' );
@@ -154,11 +157,20 @@ class mochiArcadeAutoPost
 		$queryVars[] = 'maappw';
 		return $queryVars;
 	}
+	public function hideGames($query)
+	{
+		$tag = get_term_by('slug', 'maapbs', 'post_tag');
+		if($query->is_home)
+			$query->query_vars['tag__not_in'] = array($tag->term_id);
+		//wp_reset_query();
+//		if (is_front_page())
+//			query_posts('tag__not_in=mAAPBS');
+	}
 	/*
 	 * What I consider the plugin's main function, requests game info from mochi
 	 * and adds games to the wordpress database in a new table (created by this plugin)
 	 */
-	public function runPlugin()
+	public function runPlugin($query)
 	{
 		//gets the game tag from the query
 		$gameTag = get_query_var('game_tag');
@@ -191,6 +203,7 @@ class mochiArcadeAutoPost
 			//TODO: Add an option to make games only belong to one category (as is games may belong to multiple categories, always with the parent category flash-games)
 			exit();
 		}
+		return $query;
 	}
 	/*
 	 * This is called to add the game to the database, it checks if the game
