@@ -148,6 +148,23 @@ class mochiAdminMenu
 		{
 			//explode categories string into an array
 			$categories = $this->parent->implode_funcs->explode_assoc_r2("=", "\n", 0, $game[0]['categories']);
+			$addToTags = $categories;
+			if($this->parent->mochiAutoPostOptions->options['primCat'] == 'yes')
+			{
+				if($game[0]['category'] != '')
+				{
+					$categories[0] = $game[0]['category'];
+				}
+				else
+				{
+					//In case a primary category is not set, use the first category in the array
+					//This is not ideal, but a necessary precaution as the data included with games is inconsistent
+					$categories = $this->parent->implode_funcs->explode_assoc_r2("=", "\n", 0, $game[0]['categories']);
+					$category = $categories[0];
+					unset($categories);
+					$categories[0] = $category;
+				}
+			}
 
 			$name = mysql_escape_string($game[0]['name']);
 			//explode tags into an array
@@ -191,6 +208,14 @@ class mochiAdminMenu
                     $i++;
                 }
             }
+			//This will add the game "categories" (genres) to the tags
+			foreach($addToTags as $arg)
+			{
+				if(strlen($keywd) == 0)
+					$keywd = $arg;
+				else
+					$keywd .= ','.$arg;
+			}
 			//create post
 			$keywd .= ',mAAPBS';
 			$postContent = '<p>[mochigame game_tag='.$game_tag.']</p>';

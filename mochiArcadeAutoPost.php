@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.0.5
+Version: 1.0.6
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2

@@ -25,6 +25,12 @@ class mAAPOptions
 			$this->options['maappw'] = 'password';
 		if(!array_key_exists('gamesOnHomePage', $this->options))
 			$this->options['gamesOnHomePage'] = 'yes';
+		if(!array_key_exists('primCat', $this->options))
+			$this->options['primCat'] = 'no';
+		if(!array_key_exists('minWidth', $this->options))
+			$this->options['minWidth'] = '';
+		if(!array_key_exists('maxWidth', $this->options))
+			$this->options['maxWidth'] = '';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -73,6 +79,11 @@ class mAAPOptions
 							  array(&$this, 'visText'),			//Displays in section
 							 $this->pluginName.'OptionsPage');		//settings page id
 
+		add_settings_section( 'postOpts',						//unique id for section
+							  'Post Options',							//title of the section
+							  array(&$this, 'postOps'),			//Displays in section
+							 $this->pluginName.'OptionsPage');		//settings page id
+
 
 
 		add_settings_field('mochiPublisherID',				//field ID
@@ -93,6 +104,18 @@ class mAAPOptions
 							$this->pluginName.'OptionsPage',//Page ID
 						   'mochiAPGeneral');				//Section ID
 
+		add_settings_field('primCat',						//field ID
+						   'Game categories',				//field title
+							array(&$this, 'primaCats'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//Page ID
+						   'postOpts');				//Section ID
+
+		add_settings_field('maxWidth',						//field ID
+						   'Game Width',				//field title
+							array(&$this, 'widthSet'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//Page ID
+						   'mochiAPGeneral');				//Section ID
+
 		add_settings_field('gamesOnHomePage',				//field ID
 							'Show game posts on home page?',	//field title
 							array(&$this, 'hideHome'),		//callback to display form elements
@@ -103,6 +126,50 @@ class mAAPOptions
 	public function visText()
 	{
 		echo '<p>Game Visibility</p>';
+	}
+	public function widthSet()
+	{
+		?>
+			
+		<p>
+			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[maxWidth]';?>" value="<?php echo $this->options['maxWidth'];?>" /> Maximum game width
+		</p>
+		<p>
+			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[minWidth]';?>" value="<?php echo $this->options['minWidth'];?>" /> Minimum game width
+		</p>
+		<p>
+			The default size of the games varies, this can be trouble for some
+			(most) themes, leaving both blank (or setting to 0) will always use
+			the default width, and the default width will always be preferred.
+			Setting both to the same value allows you to specify that all games
+			should be that size on your site.  The aspect ratio of the games
+			will be maintained (by proportionately altering the height as well).
+			<br />
+			<strong>NOTE: As with all game embed size altering functions, some games are
+			hard coded to a specific size, and will experience issues (such as
+			unused game elements appearing slightly off screen, or game elements
+			clipping off the edges (not just UI, but even some of the action).</strong>
+		</p>
+		<?php
+	}
+	public function postOps()
+	{
+		echo '<p>These options affect games as they are posted only (not retroactively)</p>';
+	}
+	public function primaCats()
+	{
+		?>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[primCat]" value="yes"<?php if($this->options['primCat']=='yes') echo ' checked'; ?>/> Classify games under a single category
+		</p>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[primCat]" value="no"<?php if($this->options['primCat']=='no') echo ' checked'; ?>/> Use multiple categories
+		</p>
+		<p>
+			Games, especially flash games, can be considered to fall into multiple genres, this section allows you to choose whether you want to acknowledge a game's hybrid status, or keep a clean category structure.
+			<br /><i>(Changes to this setting will only affect games posted AFTER the setting is saved.)</i>
+		</p>
+		<?php
 	}
 	public function hideHome()
 	{
@@ -200,9 +267,15 @@ class mAAPOptions
 	}
 	public function mochiAPValidate($input)
 	{
-		//currently does nothing
-		//will eventually check for valid publisher ID
-		return $input;
+		$output = $input;
+		$output['minWidth'] = (int)$output['minWidth'];
+		$output['maxWidth'] = (int)$output['maxWidth'];
+
+		if($output['minWidth'] > $output['maxWidth'])
+		{
+			$output['minWidth'] = $output['maxWidth'];
+		}
+		return $output;
 	}
 }
 ?>

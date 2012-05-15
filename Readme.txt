@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,8 +61,17 @@ The games queue page defaults to showing only unposted games, clicking the "post
 
 == Changelog ==
 
+= 1.0.6 =
+* Added option to post games under only a single category (new posts only)
+* Added game categories (genres) to tags as well (new posts only)
+* Added three new parameters to the mochigames shortcode, author, authorlink, and overridewidth, they accept the values true or false (default to true if unrecognized or not specified), author shows the SWF author's name, and authorlink transforms that into a link to the author's mochi profile and/or website.  overridewidth=true will cause the game's default width to be used even if it exceeds the minimum or maximum width in the settings.
+* The Genres the game fits into (categories) are now also added to the tags to increase game searchability, particularly when single category is turned on.
+* Added minimum and maximum width settings on options screen
+* If a custom size is specified it will override the minimum and maximum width settings in order to keep the game's aspect ratio, so if you set max width to 600, and a 640x480 game's height to 500, you will get a game embed that is wider than your maximum width setting, if you wish the aspect ratio to change, you'll have to set both width and height.
+* NOTE: As with all game embed size altering functions, some games are hard coded to a specific size, and will experience issues (such as unused game elements appearing slightly off screen, or game elements clipping off the edges.
+
 = 1.0.5 =
-* Fixed swfs with sanitized names in the style 'name%20with%20spaces' to re-sanitize in a more wordpress-friendly formate eg: 'name-with-spaces' Additionally any other % codes simply have the % removed.
+* Fixed swfs with sanitized names in the style 'name%20with%20spaces' to re-sanitize in a more wordpress-friendly formate eg: 'name-with-spaces' Additionally any other % codes simply have the % removed.(Any game with such a swf will have to be reposted)
 * Fixed a bug causing the game queue to improperly list games when there are more than 100 in the queue.
 * Added an option to hide posts created by this plugin so they don't appear on the home page (but still appear in archives).
 
