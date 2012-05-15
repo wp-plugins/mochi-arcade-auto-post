@@ -149,6 +149,8 @@ class mAAPOptions
 			hard coded to a specific size, and will experience issues (such as
 			unused game elements appearing slightly off screen, or game elements
 			clipping off the edges (not just UI, but even some of the action).</strong>
+			Fear not though, you can override these min/max width settings by either
+			specifying a width in the game post's shortcode or specifying overridewidth=true in the shortcode (to use default)
 		</p>
 		<?php
 	}

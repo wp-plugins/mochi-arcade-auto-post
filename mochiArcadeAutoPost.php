@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.0.6
+Version: 1.0.7
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2
@@ -155,6 +155,7 @@ class mochiArcadeAutoPost
 		$queryVars[] = 'mochi_list';  //used by listGames() to determine which games to list
 		$queryVars[] = 'mochi_nonce'; //used on admin page for nonce value
 		$queryVars[] = 'maappw';
+		$queryVars[] = 'thumbnailSize';
 		return $queryVars;
 	}
 	public function hideGames($query)
@@ -223,7 +224,7 @@ class mochiArcadeAutoPost
 					$key = '';
 				}
 			}
-			$currentGame = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->mochiDB['table_name']} WHERE game_tag = %s", $game[game_tag]));
+			$currentGame = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->mochiDB['table_name']} WHERE game_tag = %s", $game['game_tag']));
 			//check if game exists in database, also check if mochi returned a game
 			if($currentGame['game_tag'] == NULL && $game['game_tag'] != '')
 				$wpdb->insert($this->mochiDB['table_name'], $game);
@@ -231,24 +232,6 @@ class mochiArcadeAutoPost
 			{
 				$game['updateAvailable'] = 1;
 				$wpdb->update($this->mochiDB['table_name'], array ( 'update available' => 1), array('game_tag' => $game['game_tag']));
-			}
-		}
-		$keywd = "";
-		$count = count($keywords);
-		$i = 0;
-		if ($count)
-		{
-			foreach($keywords as $value)
-			{
-				if($count-1 == $i)
-				{
-					$keywd .= $value;
-				}
-				else
-				{
-					$keywd .= $value.", ";
-				}
-				$i++;
 			}
 		}
 	}

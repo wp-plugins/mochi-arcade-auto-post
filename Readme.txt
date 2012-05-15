@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.6
+Stable tag: 1.0.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,11 @@ The games queue page defaults to showing only unposted games, clicking the "post
 1. The game queue screen.
 
 == Changelog ==
+
+= 1.0.7 =
+* Added an option to choose thumbnail size to post on games queue page.  Small is recommended as it is more consistently the game's logo.
+* Fixed several (minor) bugs.
+* The mochigame shortcode now wraps a <div id="mochi_game"></div> around its flash embed code so it can be more easily manipulated by CSS
 
 = 1.0.6 =
 * Added option to post games under only a single category (new posts only)

@@ -249,9 +249,20 @@ class mochiAdminMenu
 			}
 			//insert post
 			$post_id = wp_insert_post($post);
-
+			$thumbnailSize = 'small';
 			//download thumbnail
-			$url = $game[0]['thumbnail_url'];
+			if(isset($_REQUEST['thumbnailSize']))
+				$thumbnailSize = $_REQUEST['thumbnailSize'];
+
+			if($thumbnailSize == 'large')
+			{
+				if($game[0]['thumbnail_large_url'] != '')
+					$url = $game[0]['thumbnail_large_url'];
+				else
+					$url = $game[0]['thumbnail_url'];
+			}
+			if($thumbnailSize == 'small')
+				$url = $game[0]['thumbnail_url'];
             $tmp = download_url( $url );
             $file_array = array(
                 'name' => $this->_sanitize_title( $game[0]['game_tag'].'_'.basename( $url )),
@@ -323,6 +334,10 @@ class mochiAdminMenu
 	{
 		global $wpdb;
 		define('numGames', 100);
+		if(!isset($_REQUEST['thumbnailSize']))
+			$_REQUEST['thumbnailSize'] = 'large';
+		//initialize data from the database
+		$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY generated DESC LIMIT %d OFFSET 0;", numGames), ARRAY_A);
 		if(isset($_REQUEST['mochi_list']))
 		{
 			$requested = $_REQUEST['mochi_list'];
@@ -338,14 +353,18 @@ class mochiAdminMenu
 					break;
 			}
 		}
-		else $requested = '0';
+		else
+		{
+			$requested = '0';
+			$_REQUEST['mochi_list'] = 'unposted';
+		}
 		?>
-		<table class="wp-list-table widefat fixed posts" cellspacing="0">
-		<tr><th>main image</th><th>name</th><th>game tag</th><th>screen1</th><th>screen2</th><th>screen3</th><th>screen4</th><th>video URL</th><th>author</th><th></th><th></th><th></th></tr>
+		<table class="wp-list-table widefat" cellspacing="0" border=".5">
+		<form name="theForm" action="edit.php?page=mochiGamesQueue" method="post">
+		<input type="hidden" name="mochi_list" value="<?php echo $_REQUEST['mochi_list'];?>"/>
+		<tr><th>small thumbnail<br /><input type="radio" name="thumbnailSize" value="small" <?php if($_REQUEST['thumbnailSize'] == 'small')echo 'checked ';?>align="centered" onclick="this.form.submit();"/></th><th>large thumbnail<br /><input type="radio" name="thumbnailSize" value="large" align ="centered" <?php if($_REQUEST['thumbnailSize'] == 'large')echo 'checked ';?>onclick="this.form.submit();"/></th><th>name</th><th>game tag</th><th>screen1</th><th>screen2</th><th>screen3</th><th>screen4</th><th>video URL</th><th>author</th><th></th><th></th><th></th></tr>
+		</form>
 		<?php
-
-		//initialize data from the database
-		$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY generated DESC LIMIT %d OFFSET 0;", numGames), ARRAY_A);
 
 
 		//initial rowOffset is 0
@@ -380,8 +399,13 @@ class mochiAdminMenu
 					?>
 					<input type="hidden" name="game_tag" value="<?php echo $game['game_tag'];?>" />
 					<input type="hidden" name="mochi_list" value="<?php echo $_REQUEST['mochi_list'];?>"/>
+					<input type="hidden" name="thumbnailSize" value="<?php echo $_REQUEST['thumbnailSize'];?>"/>
 
-					<td><img src="<?php echo $game['thumbnail_url'];?>" alt="splash for <?php echo $game['name'];?>" /></td>
+
+					<td><img src="<?php echo $game['thumbnail_url'];?>" alt="splash for <?php echo $game['name'];?>" />
+					</td>
+					<td width="200"><img src="<?php echo $game['thumbnail_large_url'];?>" alt="splash for <?php echo $game['name'];?>" />
+					</td>
 					<td><?php echo $game['name'];?></td>
 					<td><?php echo $game['game_tag'];?></td>
 					<td>

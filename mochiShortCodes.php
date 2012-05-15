@@ -107,9 +107,11 @@ class mochiShortCodes
 					if($game['posted'])
 					{
 						$output.='
+						<div id="mochi_game">
 						<object type="application/x-shockwave-flash" data="'.wp_get_attachment_url($game['swf_attach_id']).'" width="'.$width.'" height="'.$height.'">
 							<param name="movie" value="'.wp_get_attachment_url($game['swf_attach_id']).'" />
-						</object>';
+						</object>
+						</div>';
 						//Add bridge script
 						$output.='<div id="leaderboard_bridge"></div>
 							<script src="http://xs.mochiads.com/static/pub/swf/leaderboard.js" type="text/javascript"></script>
@@ -180,7 +182,7 @@ class mochiShortCodes
 			$appendAuthor = '<br />'.$appendAuthor;
 			$output .= $appendAuthor;
 			//Add disclaimer if the game's width is altered
-			if(widthAltered)
+			if($widthAltered)
 			{
 				if(array_key_exists('author', $atts) && $atts['author'] == 'false')
 					$output .= '<p>This game\'s default size has been altered, as such it may not appear as the author intended.</p>';
