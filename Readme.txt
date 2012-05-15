@@ -64,7 +64,7 @@ The games queue page defaults to showing only unposted games, clicking the "post
 = 1.0.7 =
 * Added an option to choose thumbnail size to post on games queue page.  Small is recommended as it is more consistently the game's logo.
 * Fixed several (minor) bugs.
-* The mochigame shortcode now wraps a <div id="mochi_game"></div> around its flash embed code so it can be more easily manipulated by CSS
+* The mochigame shortcode now wraps a &lt;div id="mochi_game"&gt;&lt;/div&gt; around its flash embed code so it can be more easily manipulated by CSS
 
 = 1.0.6 =
 * Added option to post games under only a single category (new posts only)
