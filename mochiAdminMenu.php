@@ -336,6 +336,18 @@ class mochiAdminMenu
 		define('numGames', 100);
 		if(!isset($_REQUEST['thumbnailSize']))
 			$_REQUEST['thumbnailSize'] = 'large';
+		?>
+		<style type="text/css">
+		th
+		{
+			white-space: nowrap;
+		}
+		td
+		{
+			white-space: nowrap;
+		}
+		</style>
+		<?php
 		//initialize data from the database
 		$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY generated DESC LIMIT %d OFFSET 0;", numGames), ARRAY_A);
 		if(isset($_REQUEST['mochi_list']))
@@ -359,10 +371,10 @@ class mochiAdminMenu
 			$_REQUEST['mochi_list'] = 'unposted';
 		}
 		?>
-		<table class="wp-list-table widefat" cellspacing="0" border=".5">
+		<table class="wp-list-table widefat" cellspacing="0" border=".5" style="text-align:left">
 		<form name="theForm" action="edit.php?page=mochiGamesQueue" method="post">
 		<input type="hidden" name="mochi_list" value="<?php echo $_REQUEST['mochi_list'];?>"/>
-		<tr><th>small thumbnail<br /><input type="radio" name="thumbnailSize" value="small" <?php if($_REQUEST['thumbnailSize'] == 'small')echo 'checked ';?>align="centered" onclick="this.form.submit();"/></th><th>large thumbnail<br /><input type="radio" name="thumbnailSize" value="large" align ="centered" <?php if($_REQUEST['thumbnailSize'] == 'large')echo 'checked ';?>onclick="this.form.submit();"/></th><th>name</th><th>game tag</th><th>screen1</th><th>screen2</th><th>screen3</th><th>screen4</th><th>video URL</th><th>author</th><th></th><th></th><th></th></tr>
+		<tr><th>small thumbnail<br /><input type="radio" name="thumbnailSize" value="small" <?php if($_REQUEST['thumbnailSize'] == 'small')echo 'checked ';?>align="centered" onclick="this.form.submit();"/></th><th>large thumbnail<br /><input type="radio" name="thumbnailSize" value="large" align ="centered" <?php if($_REQUEST['thumbnailSize'] == 'large')echo 'checked ';?>onclick="this.form.submit();"/></th><th>name</th><th>game tag</th><th>screens</th><th>more screens</th><th>video URL</th><th>author</th><th></th><th></th>
 		</form>
 		<?php
 
@@ -393,13 +405,7 @@ class mochiAdminMenu
 					//populate table data
 					?>
 					<tr>
-					<form name="<?php echo $game['uuid'];?>" action="edit.php?page=mochiGamesQueue" method="post">
-					<?php
-					wp_nonce_field( 'mochimanage', '_wpnonce', true, true );
-					?>
-					<input type="hidden" name="game_tag" value="<?php echo $game['game_tag'];?>" />
-					<input type="hidden" name="mochi_list" value="<?php echo $_REQUEST['mochi_list'];?>"/>
-					<input type="hidden" name="thumbnailSize" value="<?php echo $_REQUEST['thumbnailSize'];?>"/>
+					
 
 
 					<td><img src="<?php echo $game['thumbnail_url'];?>" alt="splash for <?php echo $game['name'];?>" />
@@ -415,6 +421,23 @@ class mochiAdminMenu
 							?>
 							<a href="<?php echo $game['screen1_url']?>">
 							<img src="<?php echo $game['screen1_url'];?>" alt="image of <?php echo $game['name'];?>" height="<?php echo $imageHeight;?>" width="100" />
+							</a>
+							<?php
+						}
+						else
+						{
+							?>
+							Image missing
+							<?php
+						}
+						?>
+							<br/>
+							<?php
+					if($game['screen3_url'] != NULL)
+						{
+							?>
+							<a href="<?php echo $game['screen3_url']?>">
+							<img src="<?php echo $game['screen3_url'];?>" alt="image of <?php echo $game['name'];?>" height="<?php echo $imageHeight;?>" width="100" />
 							</a>
 							<?php
 						}
@@ -443,27 +466,8 @@ class mochiAdminMenu
 							<?php
 						}
 						?>
-					</td>
-					<td>
-						<?php
-					if($game['screen3_url'] != NULL)
-						{
-							?>
-							<a href="<?php echo $game['screen3_url']?>">
-							<img src="<?php echo $game['screen3_url'];?>" alt="image of <?php echo $game['name'];?>" height="<?php echo $imageHeight;?>" width="100" />
-							</a>
+							<br/>
 							<?php
-						}
-						else
-						{
-							?>
-							Image missing
-							<?php
-						}
-						?>
-					</td>
-					<td>
-						<?php
 					if($game['screen4_url'] != NULL)
 						{
 							?>
@@ -480,6 +484,7 @@ class mochiAdminMenu
 						}
 						?>
 					</td>
+
 					<td><?php
 					if($game['video_url'] != NULL)
 						{
@@ -497,7 +502,14 @@ class mochiAdminMenu
 					</td>
 					<td><a href="<?php echo $game['author_link'];?>"> <?php echo $game['author'];?></a></td>
 					<td><a href="<?php echo $game['swf_url']?>">play</a></td>
-					<td><input type="submit" name="mochi_action" value="delete" />
+					<td><form name="<?php echo $game['uuid'];?>" action="edit.php?page=mochiGamesQueue" method="post">
+					<?php
+					wp_nonce_field( 'mochimanage', '_wpnonce', true, true );
+					?>
+					<input type="hidden" name="game_tag" value="<?php echo $game['game_tag'];?>" />
+					<input type="hidden" name="mochi_list" value="<?php echo $_REQUEST['mochi_list'];?>"/>
+					<input type="hidden" name="thumbnailSize" value="<?php echo $_REQUEST['thumbnailSize'];?>"/>
+					<input type="submit" name="mochi_action" value="delete" /><br/>
 						<?php
 						if($game['posted'])
 						{
@@ -506,8 +518,8 @@ class mochiAdminMenu
 							<?php
 						}
 						?>
-					</td>
-					<?php
+							<br/><br/>
+							<?php
 					if($game['posted'])
 					{
 						global $wpdb;
@@ -515,25 +527,26 @@ class mochiAdminMenu
 
 						?>
 					</form>
-						<form action="post.php?post=<?php echo $postID;?>&action=edit" method="post">
+						<form action="post.php?post=<?php echo $postID;?>&action=edit" method="post"><br/>
 						<?php
 						wp_nonce_field( 'edit', '_wpnonce', true, true );
 						?>
-							<td><input type="submit" name="mochi_action" value="<?php echo 'edit';?>"/>
-								</td>
+							<input type="submit" name="mochi_action" value="<?php echo 'edit';?>"/><br/>
 						<?php
 					}
 					else
 					{
 						?>
-						<td><input type="submit" name="mochi_action" value="post and publish" />
-						<input type="submit" name="mochi_action" value="post" /></td>
+						<input type="submit" name="mochi_action" value="post and publish" /><br/>
+						<input type="submit" name="mochi_action" value="post" /><br/>
 						<?php
 					}
 					?>
-					
-					</form>
+					</form></td>
 					</tr>
+					
+					
+					
 					<?php
 				}
 				//increment rowCount and get next row

@@ -31,6 +31,8 @@ class mAAPOptions
 			$this->options['minWidth'] = '';
 		if(!array_key_exists('maxWidth', $this->options))
 			$this->options['maxWidth'] = '';
+		if(!array_key_exists('adCode', $this->options))
+			$this->options['adCode'] = '';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -122,6 +124,25 @@ class mAAPOptions
 							$this->pluginName.'OptionsPage',//page ID
 							'mochiGamesVisibility'			//Section ID
 							);
+
+		add_settings_field('adCode(s)',						//field ID
+						   'Ad code',				//field title
+							array(&$this, 'adCodes'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//Page ID
+						   'mochiAPGeneral');
+	}
+	public function adCodes()
+	{
+		?>
+		<p>
+			<input type="text" id="adCode" name="<?php echo $this->pluginName.'Options[adCode]';?>" value="<?php echo $this->options['adCode'];?>" /> This will be placed 150px below your games<br/>
+			<strong>IMPORTANT:</strong> Google adsense recommends placing ads no less than 150px away from flash games, if you get a lot of
+			what they determine to be accidental clicks they will suspend your account regardless of whether you followed that recommendation
+			or not.  The above box will be inserted 150px below your flash game on the page as recommended, but you will be responsible for
+			ensuring that your users are not accidentally clicking on these ads.  If a particular game seems prone to this sort of thing, add noad=true
+			to its shortcode.
+		</p>
+		<?php
 	}
 	public function visText()
 	{

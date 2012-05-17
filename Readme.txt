@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.7
+Stable tag: 1.0.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,11 @@ The games queue page defaults to showing only unposted games, clicking the "post
 1. The game queue screen.
 
 == Changelog ==
+
+= 1.0.8 =
+* Added a location for ad code in the settings that places the code just below the game (with a 150px top margin IE: The ad is placed 150px from the game)
+* Added another option to the [mochigame] shortcode, noads=true will prevent the ad code you added into the settings screen from being placed (also removes the 150px border).  Leaving the ad code section blank will also prevent it from pushing everything down 150px, you could also place an html comment there if you don't want ads, but still want the space.
+* Optimized the mochi games queue page for smaller resolutions - There's now a bit of CSS that keeps it from scrunching, and also condensed some items into fewer cells.
 
 = 1.0.7 =
 * Added an option to choose thumbnail size to post on games queue page.  Small is recommended as it is more consistently the game's logo.

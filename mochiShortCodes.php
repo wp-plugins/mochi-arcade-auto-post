@@ -19,12 +19,16 @@ class mochiShortCodes
 			global $wpdb;
 			$game = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} WHERE game_tag = %s", $atts['game_tag']), ARRAY_A);
 			if(!array_key_exists('description', $atts))
-					$atts['description'] = '';
+					$atts['description'] = 'false';
 			if(!array_key_exists('instructions', $atts))
-					$atts['instructions'] = '';
+					$atts['instructions'] = 'false';
 			if(!array_key_exists('overridewidth', $atts))
 			{
 				$atts['overridewidth'] = '';
+			}
+			if(!array_key_exists('noad', $atts))
+			{
+				$atts['noad'] = 'false';
 			}
 			if(!array_key_exists('width', $atts))
 			{
@@ -107,6 +111,16 @@ class mochiShortCodes
 					if($game['posted'])
 					{
 						$output.='
+						<style type="text/css">
+						</style>
+						<style type="text/css">
+						.mAAPAds
+						{
+							position: relative;
+							margin-top: 150px;
+						}
+						</style>
+						<div id="mochi_box">
 						<div id="mochi_game">
 						<object type="application/x-shockwave-flash" data="'.wp_get_attachment_url($game['swf_attach_id']).'" width="'.$width.'" height="'.$height.'">
 							<param name="movie" value="'.wp_get_attachment_url($game['swf_attach_id']).'" />
@@ -135,7 +149,14 @@ class mochiShortCodes
 				}
 				else if($this->parent->mochiAutoPostOptions->options['autoPostSWF'] == 'link')
 				{
-					$output = '<a href='.wp_get_attachment_url($game['swf_attach_id']).'>Click here to play!</a>';
+					$output = '<a href='.wp_get_attachment_url($game['swf_attach_id']).'>Click here to play '.$game['name'].'!</a>';
+				}
+				if($atts['noad'] == 'false' && $this->parent->mochiAutoPostOptions->options['adCode'] != '')
+				{
+					$output .= '';
+					$output .= '<div id="mochiAdCode" class="mAAPAds">';
+					$output .= $this->parent->mochiAutoPostOptions->options['adCode'];
+					$output .= '</div></div>';
 				}
 				if($atts['description'] == 'true')
 				{
