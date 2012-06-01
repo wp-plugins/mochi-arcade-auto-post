@@ -33,6 +33,10 @@ class mAAPOptions
 			$this->options['maxWidth'] = '';
 		if(!array_key_exists('adCode', $this->options))
 			$this->options['adCode'] = '';
+		if(!array_key_exists('postPics', $this->options))
+			$this->options['postPics'] = 'no';
+		if(!array_key_exists('postScreens', $this->options))
+			$this->options['postScreens'] = 'yes';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -125,11 +129,55 @@ class mAAPOptions
 							'mochiGamesVisibility'			//Section ID
 							);
 
+		add_settings_field('postPics',				//field ID
+							'add featured image to post',	//field title
+							array(&$this, 'postPicture'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//page ID
+							'postOpts'			//Section ID
+							);
+
+		add_settings_field('postScreens',				//field ID
+							'add screenshots to post',	//field title
+							array(&$this, 'postScreenies'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//page ID
+							'postOpts'			//Section ID
+							);
+
 		add_settings_field('adCode(s)',						//field ID
 						   'Ad code',				//field title
 							array(&$this, 'adCodes'),		//callback to display form elements
 							$this->pluginName.'OptionsPage',//Page ID
 						   'mochiAPGeneral');
+	}
+	public function postScreenies()
+	{
+		?>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[postScreens]" value="yes"<?php if($this->options['postScreens']=='yes') echo ' checked'; ?>/> Yes
+		</p>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[postScreens]" value="no"<?php if($this->options['postScreens']=='no') echo ' checked'; ?>/> No
+		</p>
+		<p>
+			Setting this to yes will cause screenshots to be posted under the description.
+			<br /><i>(Changes to this setting will only affect games posted AFTER the setting is saved.)</i>
+		</p>
+		<?php
+	}
+	public function postPicture()
+	{
+		?>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[postPics]" value="yes"<?php if($this->options['postPics']=='yes') echo ' checked'; ?>/> Yes
+		</p>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[postPics]" value="no"<?php if($this->options['postPics']=='no') echo ' checked'; ?>/> No
+		</p>
+		<p>
+			Set this to yes if you're using a theme that does not support featured images (or you just want the game's primary image to be in the game post)
+			<br /><i>(Changes to this setting will only affect games posted AFTER the setting is saved.)</i>
+		</p>
+		<?php
 	}
 	public function adCodes()
 	{

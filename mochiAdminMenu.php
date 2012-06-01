@@ -8,6 +8,7 @@ class mochiAdminMenu
 {
 	private $mochiDB;
 	private $parent;
+	private $last_id;
 	/*
 	 * Manages the admin menu
 	 *
@@ -222,6 +223,38 @@ class mochiAdminMenu
 			$postContent .= '<p>'.$game[0]['description'].'</p>';
 			if($game[0]['description'] != $game[0]['instructions'])
 				$postContent .= '<p>'.$game[0]['instructions'].'</p>';
+			$tempPostCont = $postContent;
+			
+			$thumbnailSize = 'small';
+			//download thumbnail
+			if(isset($_REQUEST['thumbnailSize']))
+				$thumbnailSize = $_REQUEST['thumbnailSize'];
+
+			if($thumbnailSize == 'large')
+			{
+				if($game[0]['thumbnail_large_url'] != '')
+				{
+					$url = $game[0]['thumbnail_large_url'];
+				}
+				else
+				{
+					$url = $game[0]['thumbnail_url'];
+				}
+			}
+			if($thumbnailSize == 'small')
+			{
+				if($game[0]['thumbnail_url'] != '')
+				{
+					$url = $game[0]['thumbnail_url'];
+				}
+				else
+				{
+					$url = $game[0]['thumbail_large_url'];
+				}
+			}
+			if($this->parent->mochiAutoPostOptions->options['postPics'] == 'yes')
+				$postContent = '<p><img src="'.$url.'"alt="splash for '.$game[0]['name'].'"/></p>'.$tempPostCont;
+
 			//setup post array
 			if($publish)
 			{
@@ -249,20 +282,44 @@ class mochiAdminMenu
 			}
 			//insert post
 			$post_id = wp_insert_post($post);
-			$thumbnailSize = 'small';
-			//download thumbnail
-			if(isset($_REQUEST['thumbnailSize']))
-				$thumbnailSize = $_REQUEST['thumbnailSize'];
 
-			if($thumbnailSize == 'large')
+			//add images to post
+			if($this->parent->mochiAutoPostOptions->options['postScreens'] == 'yes')
 			{
-				if($game[0]['thumbnail_large_url'] != '')
-					$url = $game[0]['thumbnail_large_url'];
-				else
-					$url = $game[0]['thumbnail_url'];
+				$gameCount = 0;
+				add_action('add_attachment',array(&$this, 'get_attach_id'));
+				$postContent .= '<p>';
+				while($gameCount < 4)
+				{
+					$gameCount++;
+					if($game[0]['screen'.$gameCount.'_url'] != '')
+					{
+						$theScreenie = $game[0]['screen'.$gameCount.'_url'];
+						$tmp = download_url( $theScreenie );
+						$file_array = array(
+											'name' => $this->_sanitize_title( $game[0]['game_tag'].'_'.basename( $theScreenie )),
+											'tmp_name' => $tmp
+											);
+
+						// Check for download errors
+						if ( is_wp_error( $tmp ) )
+						{
+							@unlink( $file_array[ 'tmp_name' ] );
+							return $tmp;
+						}
+						$id = media_handle_sideload( $file_array, $post_id, 'screenshot of '.$game[0]['name']);
+						$postContent .= wp_get_attachment_link( $this->last_id, 'thumbnail', true);
+					}//asj;dlfkjasd;lfkjas;dlfkjasd;flkajsdf;lkasdjf;laksdjf;asldkjf
+				}
+				$postContent .= '</p>';
+				remove_action('add_attachment',array(&$this, 'get_attach_id'));
 			}
-			if($thumbnailSize == 'small')
-				$url = $game[0]['thumbnail_url'];
+
+			//edit post with changes
+			$post['ID'] = $post_id;
+			$post['post_content'] = $postContent;
+			$post_id = wp_insert_post($post);
+
             $tmp = download_url( $url );
             $file_array = array(
                 'name' => $this->_sanitize_title( $game[0]['game_tag'].'_'.basename( $url )),
@@ -315,6 +372,10 @@ class mochiAdminMenu
 		echo '<h2>Game tag not found!</h2>';
 		$this->listGames();
 		return 0;
+	}
+	public function get_attach_id($att_id)
+	{
+		$this->last_id = $att_id;
 	}
 	//removes % characters before sending to sanitize_title
 	public function _sanitize_title($string)

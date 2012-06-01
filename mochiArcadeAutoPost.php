@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.0.8
+Version: 1.0.9
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2
@@ -201,7 +201,6 @@ class mochiArcadeAutoPost
 			//TODO: Create a cron that checks for game updates.
 			//TODO: Create a button that appears when a game needs to be updated, to redownload that game, as well as its data
 			//TODO: Create a system to rate games (thumbs up/thumbs down)
-			//TODO: Add an option to make games only belong to one category (as is games may belong to multiple categories, always with the parent category flash-games)
 			exit();
 		}
 		return $query;

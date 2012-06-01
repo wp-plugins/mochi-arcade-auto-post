@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -60,6 +60,10 @@ The games queue page defaults to showing only unposted games, clicking the "post
 1. The game queue screen.
 
 == Changelog ==
+
+= 1.0.9 =
+* Added an option to post the game thumbnail directly to the game post (adding support for themes that do not use featured images)
+* Added an option to post screenshots to the game post (in the form of thumbnail links to an attachment page with the full size image)
 
 = 1.0.8 =
 * Added a location for ad code in the settings that places the code just below the game (with a 150px top margin IE: The ad is placed 150px from the game)
