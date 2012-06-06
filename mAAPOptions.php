@@ -37,6 +37,12 @@ class mAAPOptions
 			$this->options['postPics'] = 'no';
 		if(!array_key_exists('postScreens', $this->options))
 			$this->options['postScreens'] = 'yes';
+		if(!array_key_exists('thumbSize', $this->options))
+			$this->options['thumbSize'] = 'large';
+		if(!array_key_exists('screenThumbWidth', $this->options))
+			$this->options['screenThumbWidth'] = '64';
+		if(!array_key_exists('screenThumbHeight', $this->options))
+			$this->options['screenThumbHeight'] = '64';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -78,6 +84,11 @@ class mAAPOptions
 		add_settings_section( 'mochiAPGeneral',						//unique id for section
 							  'General',							//title of the section
 							  array(&$this, 'generalText'),			//Displays in section
+							 $this->pluginName.'OptionsPage');		//settings page id
+
+		add_settings_section( 'pictures',						//unique id for section
+							  'Screenshots and thumbnails',							//title of the section
+							  array(&$this, 'piccieOps'),			//Displays in section
 							 $this->pluginName.'OptionsPage');		//settings page id
 		
 		add_settings_section( 'mochiGamesVisibility',						//unique id for section
@@ -133,12 +144,26 @@ class mAAPOptions
 							'add featured image to post',	//field title
 							array(&$this, 'postPicture'),		//callback to display form elements
 							$this->pluginName.'OptionsPage',//page ID
-							'postOpts'			//Section ID
+							'pictures'			//Section ID
 							);
 
 		add_settings_field('postScreens',				//field ID
 							'add screenshots to post',	//field title
 							array(&$this, 'postScreenies'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//page ID
+							'pictures'			//Section ID
+							);
+
+		add_settings_field('screenThumbSize',				//field ID
+							'Screenshot thumbnail size',	//field title
+							array(&$this, 'screenshotThumbSize'),		//callback to display form elements
+							$this->pluginName.'OptionsPage',//page ID
+							'pictures'			//Section ID
+							);
+
+		add_settings_field('thumbSize',				//field ID
+							'What size thumbnails to prefer?',	//field title
+							array(&$this, 'thumbnailSize'),		//callback to display form elements
 							$this->pluginName.'OptionsPage',//page ID
 							'postOpts'			//Section ID
 							);
@@ -148,6 +173,35 @@ class mAAPOptions
 							array(&$this, 'adCodes'),		//callback to display form elements
 							$this->pluginName.'OptionsPage',//Page ID
 						   'mochiAPGeneral');
+	}
+	public function screenshotThumbSize()
+	{
+		?>
+		<p>
+			<input type="text" id="screenThumbWidth" name="<?php echo $this->pluginName.'Options[screenThumbWidth]';?>" value="<?php echo $this->options['screenThumbWidth'];?>" /> Thumbnail width
+		</p>
+		<p>
+			<input type="text" id="screenThumbHeight" name="<?php echo $this->pluginName.'Options[screenThumbHeight]';?>" value="<?php echo $this->options['screenThumbHeight'];?>" /> Thumbnail height
+		</p>
+		<br/>The plugin uses the thumbnail size image created by Wordpress, and then scales it to whatever values you add here via HTML,
+		so there may be pixelation if you set it larger than the thumbnail size.
+		<?php
+	}
+	public function thumbnailSize()
+	{
+		?>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbSize]" value="large"<?php if($this->options['thumbSize']=='large') echo ' checked'; ?>/> Large
+		</p>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbSize]" value="small"<?php if($this->options['thumbSize']=='small') echo ' checked'; ?>/> Small
+		</p>
+		<p>
+			Which size thumbnails should the plugin prefer?<br/>
+			A small and a large thumbnail is available for each game <br/>
+			They sometimes differ in ways other than size
+		</p>
+		<?php
 	}
 	public function postScreenies()
 	{
@@ -159,8 +213,7 @@ class mAAPOptions
 			<input type="radio" name="<?php echo $this->pluginName; ?>Options[postScreens]" value="no"<?php if($this->options['postScreens']=='no') echo ' checked'; ?>/> No
 		</p>
 		<p>
-			Setting this to yes will cause screenshots to be posted under the description.
-			<br /><i>(Changes to this setting will only affect games posted AFTER the setting is saved.)</i>
+			Setting this to yes will cause screenshots to be shown with the game (as links to the game's gallery).
 		</p>
 		<?php
 	}
@@ -174,8 +227,7 @@ class mAAPOptions
 			<input type="radio" name="<?php echo $this->pluginName; ?>Options[postPics]" value="no"<?php if($this->options['postPics']=='no') echo ' checked'; ?>/> No
 		</p>
 		<p>
-			Set this to yes if you're using a theme that does not support featured images (or you just want the game's primary image to be in the game post)
-			<br /><i>(Changes to this setting will only affect games posted AFTER the setting is saved.)</i>
+			Setting this to yes will cause the game's thumbnail to be shown (as a link to the game's post)
 		</p>
 		<?php
 	}
@@ -201,10 +253,10 @@ class mAAPOptions
 		?>
 			
 		<p>
-			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[maxWidth]';?>" value="<?php echo $this->options['maxWidth'];?>" /> Maximum game width
+			<input type="text" id="maxWidth" name="<?php echo $this->pluginName.'Options[maxWidth]';?>" value="<?php echo $this->options['maxWidth'];?>" /> Maximum game width
 		</p>
 		<p>
-			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[minWidth]';?>" value="<?php echo $this->options['minWidth'];?>" /> Minimum game width
+			<input type="text" id="minWidth" name="<?php echo $this->pluginName.'Options[minWidth]';?>" value="<?php echo $this->options['minWidth'];?>" /> Minimum game width
 		</p>
 		<p>
 			The default size of the games varies, this can be trouble for some
@@ -226,6 +278,10 @@ class mAAPOptions
 	public function postOps()
 	{
 		echo '<p>These options affect games as they are posted only (not retroactively)</p>';
+	}
+	public function piccieOps()
+	{
+		
 	}
 	public function primaCats()
 	{
@@ -341,6 +397,13 @@ class mAAPOptions
 		$output = $input;
 		$output['minWidth'] = (int)$output['minWidth'];
 		$output['maxWidth'] = (int)$output['maxWidth'];
+		$output['screenThumbWidth'] = (int)$output['screenThumbWidth'];
+		$output['screenThumbHeight'] = (int)$output['screenThumbHeight'];
+
+		if($output['screenThumbWidth'] == 0)
+			$output['screenThumbWidth'] = 32;
+		if($output['screenThumbHeight'] == 0)
+			$output['screenThumbHeight'] = 32;
 
 		if($output['minWidth'] > $output['maxWidth'])
 		{

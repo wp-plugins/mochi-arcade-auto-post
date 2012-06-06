@@ -5,12 +5,86 @@
 class mochiShortCodes
 {
 	private $parent;
+	public $screenshotSize;
+	public $excerpt;
+	public $count;
 	public function mochiShortCodes(&$parent)
 	{
 		$this->parent = $parent;
+		$this->screenshotSize['width'] = $this->parent->mochiAutoPostOptions->options['screenThumbWidth'];
+		$this->screenshotSize['height'] = $this->parent->mochiAutoPostOptions->options['screenThumbHeight'];
+		$this->excerpt = '';
+		$this->count = 0; //will be incremented as it is used
 		add_shortcode('mochigame', array(&$this, 'mochiShortcode'));
+		if(!is_admin())
+		{
+			//don't filter on administration panel pages
+			//many plugins use this filter to run do_shortcode in excerpts, but for compatibility purposes I don't
+			//if a user is expecting other shortcodes to not be run in the excerpt for instance
+			//so I'm going to write functions that will process ONLY [mochigame]
+			add_filter('get_the_excerpt', array(&$this, 'doTheExcerpt'));
+		}
 	}
-	public function mochiShortcode($atts, $content = null, $tags = null)
+	public function doTheExcerpt($excerpt)
+	{
+		global $wpdb;
+		$output = '';
+		$count = 0;
+		$excerpt = str_replace('m-DONT CHANGE:', '', $excerpt, $count);
+
+
+		if($count >= 1)
+		{
+			$game = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} WHERE game_tag = %s", $excerpt), ARRAY_A);
+			$post = $wpdb->get_row($wpdb->prepare('SELECT * FROM '.$wpdb->posts.' WHERE ID = %d', $game['post_ID']), ARRAY_A);
+
+	        $pattern = get_shortcode_regex();
+	        preg_replace_callback( "/$pattern/s", array(&$this, 'processMochiOnly'), $post['post_content'] );
+			$output = $this->excerpt;
+		}
+		else
+			$output = $excerpt;
+		return $output;
+	}
+	public function processMochiOnly($m)
+	{
+		global $shortcode_tags;
+		$tag = $m[2];
+		// allow [[foo]] syntax for escaping a tag
+	        if ( $m[1] == '[' && $m[6] == ']' )
+			{
+				//This shortcode is escaped, so letting it be handled normally is just fine.
+				return $m[0];
+	        }
+			$attr = shortcode_parse_atts( $m[3] );
+
+			if ( isset( $m[5] ) )
+			{
+			// enclosing tag - extra parameter
+				//Only process mochigame tags
+				if($tag == 'mochigame')
+				{
+					$this->excerpt = $m[1] . call_user_func( $shortcode_tags[$tag], $attr, $m[5], $tag ) . $m[6];
+					return $this->excerpt;
+				}
+				else
+					return $m[0]; //not mochigame, don't process
+			}
+			else
+			{
+			// self-closing tag
+				if($tag == 'mochigame')
+				{
+					$this->excerpt = $m[1] . call_user_func( $shortcode_tags[$tag], $attr, $m[5], $tag ) . $m[6];
+					return $this->excerpt;
+				}
+				else
+					return $m[0]; //not mochigame, don't process
+
+
+			}
+	}
+	public function mochiShortcode($atts, $content = null, $tag = null)
 	{
 
 		$output = '';
@@ -173,6 +247,35 @@ class mochiShortCodes
 			}
 			else
 			{
+			$args = array(
+			'post_parent' => $game['post_ID'],
+			'post_type' => 'attachment',
+			'post_mime_type' => 'image'
+					);
+			$attachments = get_children($args, ARRAY_A);
+			$thumb = get_post_thumbnail_id($game['post_ID']);
+			if($this->parent->mochiAutoPostOptions->options['postPics'] == 'yes')
+			{
+				$output .= '<a href="'.get_permalink($game['post_ID']).'">';
+				$output .= wp_get_attachment_image( $thumb, 'full');
+				$output .= '</a></br>';
+			}
+			if($this->parent->mochiAutoPostOptions->options['postScreens'] == 'yes')
+			foreach ($attachments as $attID => $att)
+			{
+				if($attID != $thumb)
+				{
+					$imageSRC = wp_get_attachment_image_src( $attID, 'thumbnail', true);
+					$output .= '<a href='.get_attachment_link($attID).'>';
+					$output .= '<img src="'.$imageSRC[0].'"  alt="Screenshot of '.(string)$game['name'].'" title="Screenshot of '.(string)$game['name'].'" style="height:'.$this->screenshotSize['height'].
+							'px;width:'.$this->screenshotSize['width'].'px;"/>';
+					$output .= '</a>';
+				}
+			}
+
+
+
+
 				if($atts['description'] == 'true')
 				{
 					$output .= '<p>';
@@ -202,6 +305,7 @@ class mochiShortCodes
 			}
 			$appendAuthor = '<br />'.$appendAuthor;
 			$output .= $appendAuthor;
+
 			//Add disclaimer if the game's width is altered
 			if($widthAltered)
 			{
@@ -211,6 +315,7 @@ class mochiShortCodes
 					$output .= '<p>This game\'s default size has been altered, as such it may not appear as '.$game['author'].' intended.</p>';
 			}
 		}
+		$output .= $content;
 		return $output;
 	}
 }

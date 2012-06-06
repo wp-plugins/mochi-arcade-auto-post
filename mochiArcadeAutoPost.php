@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.0.9
+Version: 1.1.0
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2
@@ -69,9 +69,14 @@ class mochiArcadeAutoPost
 			//action to add a game to the queue
 			new mochiShortCodes($this);
 			if(!is_admin())
+			{
 				add_action('pre_get_posts', array(&$this, 'runPlugin'), 0);
+			}
 			else
+			{
 				new mochiAdminMenu($this);
+				add_action('wp_loaded', array(&$this, 'runUpdate'), 0);
+			}
 
 			if($this->mochiAutoPostOptions->options['gamesOnHomePage'] == 'no')
 					add_filter('pre_get_posts', array(&$this, 'hideGames'));
@@ -128,6 +133,35 @@ class mochiArcadeAutoPost
 			}
 		}
 	}
+	public function runUpdate()
+	{
+		if($this->mochiDB['DB_version'] != '1.1.0' && current_user_can('manage_games'))
+		{
+			global $wpdb;
+			global $wp_query;
+			//get all game posts
+			//modify game posts to fit the new format
+			$args = array('slug' => 'maapbs');
+			$tag = get_tags($args);
+
+			if(!empty($tag))
+				$posts = $wpdb->get_results($wpdb->prepare('SELECT * FROM '.$wpdb->posts.' INNER JOIN '.
+					$wpdb->term_relationships.' ON '.$wpdb->posts.'.ID='.$wpdb->term_relationships.'.object_id
+					WHERE '.$wpdb->term_relationships.'.term_taxonomy_id = %d;', $tag[0]->term_taxonomy_id), ARRAY_A);
+			foreach ($posts as $post)
+			{
+				$temp = $post['post_content'];
+				$post['post_content'] = strip_tags($temp, '<p><br><strong><em><i><b>');
+				$post['post_content'] .= '[/mochigame]';
+				$temp2 = str_replace('game_tag=', '', $temp);
+				$pos = strpos($temp, 'game_tag=');
+				$temp2 = substr($temp, $pos+9, 16);
+				$post['post_excerpt'] = 'm-DONT CHANGE:'.$temp2;
+				wp_update_post($post);
+			}
+			update_option('mochiDB', array('DB_version' => '1.1.0', 'table_name' => $wpdb->prefix.$this->pluginName));
+		}
+	}
 	/*
 	 * Get a visitor's IP address
 	 *
@@ -176,6 +210,7 @@ class mochiArcadeAutoPost
 		//gets the game tag from the query
 		$gameTag = get_query_var('game_tag');
 		$maappw = get_query_var('maappw');
+		
 		//checks if game_tag was set
 		if($gameTag != '' && $maappw == $this->mochiAutoPostOptions->options['maappw'])
 		{
@@ -241,7 +276,7 @@ class mochiArcadeAutoPost
 
 		$wp_roles->add_cap('administrator', 'manage_games');
 		require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
-		add_option('mochiDB', array('DB_version' => '1.0', 'table_name' => $wpdb->prefix.$this->pluginName));
+		add_option('mochiDB', array('DB_version' => '1.1.0', 'table_name' => $wpdb->prefix.$this->pluginName));
 		$this->mochiDB = get_option('mochiDB');
 
 

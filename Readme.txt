@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.0.9
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -47,19 +47,34 @@ Eventually there will be a games browser, as well as a shortcode to post a full 
 
 = I use google adsense, is it ok to put games on posts that may have an ad? =
 
-It is ok, however, google recommends that you place the ad at least 150 px from the flash game.  In the future there will be a section in options to add a google adsense snippet that will be placed exactly 150 px from the flash game.  As always though you will be responsible for ensuring that no more than 3 ads are placed on a page at any one time (IE: Set any other plugin that places adsense accordingly to ensure this does not happen).
+It is ok, however, google recommends that you place the ad at least 150 px from the flash game.  There is a section in options to add a google adsense snippet that will be placed exactly 150 px from the flash game.  As always though you will be responsible for ensuring that no more than 3 ads are placed on a page at any one time (IE: Set any other plugin that places adsense accordingly to ensure this does not happen).
 
 If you get a lot of `accidental clicks` google may suspend your account if they believe you have placed the ads very close to the flash game specifically to farm accidental clicks.  IE: Don't do this, ever.
+Google still may decide they don't like your site's ads and game placement, if this happens you should remove the ad code immediately.  This is a tool to help you comply, not a guarantee of anything.
 
 = The games queue page is empty! =
 
-The games queue page defaults to showing only unposted games, clicking the "posted", or "all" buttons should show your already posted games.  Barring that, if you haven't already, you need to add games to the queue by clicking "Post game to my site" on http://www.mochimedia.com
+You need to add some games!
 
 == Screenshots ==
 
 1. The game queue screen.
 
 == Changelog ==
+
+= 1.1.0 =
+* Screenshots and thumbnails will now always be downloaded for each game
+* If no unposted games are found, the admin menu will go to posted view
+* The options to show screenshots and thumbnails on the post now work retroactively (except any games downloaded without screenshots won't have any available to post)
+* The shortcode is now an enclosed type shortcode, the data in it will be displayed on the post, and in the excerpt, basically the shortcode echos it.  It is important as the excerpt contains that text only.
+* Post excerpts are now set automatically to m-DONT CHANGE:(a game tag) - it uses the game tag to fetch data for that game.
+* That excerpt is now replaced by a function that processes (only) the mochigame shortcode
+* These changes should provide for broader theme compatibility
+* The plugin on update will read your current game posts, strip the img tags it may have placed earlier, and add the closing /mochigame shortcode, so you shouldn't need to do anything. This may strip other html if you've added it to game posts as well though.
+* Screenshots are shown as thumbnails, you can edit their size in the options.
+* Default game thumbnail to download is selectable in options menu as well, you can still select which one you want in the games queue anyway though.
+* If you wish to set your excerpt manually, you still can, but screenshots and such won't show up unless you put them there.
+* This update introduces some fairly advanced interactions with wordpress, please report any bugs to felps@bionicsquirrels.com
 
 = 1.0.9 =
 * Added an option to post the game thumbnail directly to the game post (adding support for themes that do not use featured images)
@@ -85,7 +100,7 @@ The games queue page defaults to showing only unposted games, clicking the "post
 * NOTE: As with all game embed size altering functions, some games are hard coded to a specific size, and will experience issues (such as unused game elements appearing slightly off screen, or game elements clipping off the edges.
 
 = 1.0.5 =
-* Fixed swfs with sanitized names in the style 'name%20with%20spaces' to re-sanitize in a more wordpress-friendly formate eg: 'name-with-spaces' Additionally any other % codes simply have the % removed.(Any game with such a swf will have to be reposted)
+* Fixed swfs with sanitized names in the style 'name%20with%20spaces' to re-sanitize in a more wordpress-friendly format eg: 'name-with-spaces' Additionally any other % codes simply have the % removed.(Any game with such a swf will have to be reposted)
 * Fixed a bug causing the game queue to improperly list games when there are more than 100 in the queue.
 * Added an option to hide posts created by this plugin so they don't appear on the home page (but still appear in archives).
 
@@ -108,3 +123,4 @@ The games queue page defaults to showing only unposted games, clicking the "post
 * Creates posts to display said games
 * Deletes those same posts, and all supporting documents (flash games/screenshots) from your website
 * Erases all changes it made to the database should you decide to delete (not deactivate) the plugin. (This includes much of the data it gathers about the games, but does not include any posts made to your wordpress site, or media such as the swf files, and thumbnails (which ARE deleted if you click delete on the game queue page).
+* Includes a box for a code snippet to be placed 150 px from the game (such as an advertising code)

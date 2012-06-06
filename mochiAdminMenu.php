@@ -144,7 +144,6 @@ class mochiAdminMenu
 		//fetch game from database
 		$game = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} WHERE game_tag = %s;", $game_tag), ARRAY_A);
 
-
 		if(isset($game[0]))
 		{
 			//explode categories string into an array
@@ -225,10 +224,11 @@ class mochiAdminMenu
 				$postContent .= '<p>'.$game[0]['instructions'].'</p>';
 			$tempPostCont = $postContent;
 			
-			$thumbnailSize = 'small';
 			//download thumbnail
 			if(isset($_REQUEST['thumbnailSize']))
 				$thumbnailSize = $_REQUEST['thumbnailSize'];
+			else
+				$thumbnailSize = $this->parent->mochiAutoPostOptions->options['thumbSize'];
 
 			if($thumbnailSize == 'large')
 			{
@@ -238,7 +238,9 @@ class mochiAdminMenu
 				}
 				else
 				{
-					$url = $game[0]['thumbnail_url'];
+					if($game[0]['thumbnail_url'] != '')
+						$url = $game[0]['thumbnail_url'];
+					//TODO: Set default image if no thumbnail exists
 				}
 			}
 			if($thumbnailSize == 'small')
@@ -252,8 +254,7 @@ class mochiAdminMenu
 					$url = $game[0]['thumbail_large_url'];
 				}
 			}
-			if($this->parent->mochiAutoPostOptions->options['postPics'] == 'yes')
-				$postContent = '<p><img src="'.$url.'"alt="splash for '.$game[0]['name'].'"/></p>'.$tempPostCont;
+			
 
 			//setup post array
 			if($publish)
@@ -261,7 +262,7 @@ class mochiAdminMenu
 				$post = array(
 				'post_author' => get_current_user_id(),
 				'post_category' => $cats,
-				'post_content' => $postContent,
+				'post_content' => '',
 				'post_status' => 'publish',
 				'post_title' => $name,
 				'post_type' => 'post',
@@ -273,7 +274,7 @@ class mochiAdminMenu
 				$post = array(
 				'post_author' => get_current_user_id(),
 				'post_category' => $cats,
-				'post_content' => $postContent,
+				'post_content' => '',
 				'post_status' => 'pending',
 				'post_title' => $name,
 				'post_type' => 'post',
@@ -282,43 +283,10 @@ class mochiAdminMenu
 			}
 			//insert post
 			$post_id = wp_insert_post($post);
+			add_action('add_attachment',array(&$this, 'get_attach_id'));
+			
 
-			//add images to post
-			if($this->parent->mochiAutoPostOptions->options['postScreens'] == 'yes')
-			{
-				$gameCount = 0;
-				add_action('add_attachment',array(&$this, 'get_attach_id'));
-				$postContent .= '<p>';
-				while($gameCount < 4)
-				{
-					$gameCount++;
-					if($game[0]['screen'.$gameCount.'_url'] != '')
-					{
-						$theScreenie = $game[0]['screen'.$gameCount.'_url'];
-						$tmp = download_url( $theScreenie );
-						$file_array = array(
-											'name' => $this->_sanitize_title( $game[0]['game_tag'].'_'.basename( $theScreenie )),
-											'tmp_name' => $tmp
-											);
-
-						// Check for download errors
-						if ( is_wp_error( $tmp ) )
-						{
-							@unlink( $file_array[ 'tmp_name' ] );
-							return $tmp;
-						}
-						$id = media_handle_sideload( $file_array, $post_id, 'screenshot of '.$game[0]['name']);
-						$postContent .= wp_get_attachment_link( $this->last_id, 'thumbnail', true);
-					}//asj;dlfkjasd;lfkjas;dlfkjasd;flkajsdf;lkasdjf;laksdjf;asldkjf
-				}
-				$postContent .= '</p>';
-				remove_action('add_attachment',array(&$this, 'get_attach_id'));
-			}
-
-			//edit post with changes
-			$post['ID'] = $post_id;
-			$post['post_content'] = $postContent;
-			$post_id = wp_insert_post($post);
+			
 
             $tmp = download_url( $url );
             $file_array = array(
@@ -342,6 +310,36 @@ class mochiAdminMenu
                 return $id;
             }
 
+			//edit post with changes
+			//init post id
+			$post['ID'] = $post_id;
+			//add screenshots to post
+			$gameCount = 0;
+			while($gameCount < 4)
+			{
+				$gameCount++;
+				if($game[0]['screen'.$gameCount.'_url'] != '')
+				{
+					$theScreenie = $game[0]['screen'.$gameCount.'_url'];
+					$tmp = download_url( $theScreenie );
+					$file_array = array(
+										'name' => $this->_sanitize_title( $game[0]['game_tag'].'_'.basename( $theScreenie )),
+										'tmp_name' => $tmp
+										);
+
+					// Check for download errors
+					if ( is_wp_error( $tmp ) )
+					{
+						@unlink( $file_array[ 'tmp_name' ] );
+						return $tmp;
+					}
+					$id = media_handle_sideload( $file_array, $post_id, 'screenshot of '.$game[0]['name']);
+				}
+			}
+
+			$post['post_content'] = $postContent.'[/mochigame]';
+			$post['post_excerpt'] = 'm-DONT CHANGE:'.$game[0]['game_tag'];
+			$post_id = wp_insert_post($post);
 
 			$url = $game[0]['swf_url'];
             $tmp = download_url( $url );
@@ -395,8 +393,10 @@ class mochiAdminMenu
 	{
 		global $wpdb;
 		define('numGames', 100);
-		if(!isset($_REQUEST['thumbnailSize']))
-			$_REQUEST['thumbnailSize'] = 'large';
+		if(isset($_REQUEST['thumbnailSize']))
+			$thumbnailSize = $_REQUEST['thumbnailSize'];
+		else
+			$thumbnailSize = $this->parent->mochiAutoPostOptions->options['thumbSize'];
 		?>
 		<style type="text/css">
 		th
@@ -409,6 +409,7 @@ class mochiAdminMenu
 		}
 		</style>
 		<?php
+		$check = $wpdb->get_col($wpdb->prepare("SELECT posted FROM {$this->parent->mochiDB['table_name']} WHERE posted = 0"));
 		//initialize data from the database
 		$games = $wpdb->get_results($wpdb->prepare("SELECT * FROM {$this->parent->mochiDB['table_name']} ORDER BY generated DESC LIMIT %d OFFSET 0;", numGames), ARRAY_A);
 		if(isset($_REQUEST['mochi_list']))
@@ -420,7 +421,14 @@ class mochiAdminMenu
 					break;
 				case 'posted': $requested = '1';
 					break;
-				case 'unposted': $requested = '0';
+				case 'unposted':
+					$requested = '0';
+					if(empty($check))
+					{
+						echo '<strong>There are no unposted games</strong> </br>';
+						$_REQUEST['mochi_list'] = 'posted';
+						$requested = 1;
+					}
 					break;
 				default: $requested = '0';
 					break;
@@ -430,12 +438,23 @@ class mochiAdminMenu
 		{
 			$requested = '0';
 			$_REQUEST['mochi_list'] = 'unposted';
+			if(empty($check))
+			{
+				echo '<strong>There are no unposted games</strong> </br>';
+				$_REQUEST['mochi_list'] = 'posted';
+				$requested = 1;
+			}
 		}
 		?>
+
 		<table class="wp-list-table widefat" cellspacing="0" border=".5" style="text-align:left">
-		<form name="theForm" action="edit.php?page=mochiGamesQueue" method="post">
+		<form name="theForm" action="edit.php?page=mochiGamesQueue" method="post" id="theForm">
 		<input type="hidden" name="mochi_list" value="<?php echo $_REQUEST['mochi_list'];?>"/>
-		<tr><th>small thumbnail<br /><input type="radio" name="thumbnailSize" value="small" <?php if($_REQUEST['thumbnailSize'] == 'small')echo 'checked ';?>align="centered" onclick="this.form.submit();"/></th><th>large thumbnail<br /><input type="radio" name="thumbnailSize" value="large" align ="centered" <?php if($_REQUEST['thumbnailSize'] == 'large')echo 'checked ';?>onclick="this.form.submit();"/></th><th>name</th><th>game tag</th><th>screens</th><th>more screens</th><th>video URL</th><th>author</th><th></th><th></th>
+		<tr><th>small thumbnail<br/>
+				<input type="radio" name="thumbnailSize" value="small"<?php if($thumbnailSize == 'small') echo ' checked';?> onclick="submit();"/>
+		</th><th>large thumbnail<br/>
+		<input type="radio" name="thumbnailSize" value="large"<?php if($thumbnailSize == 'large') echo ' checked';?> onclick="submit();"/>
+		</th><th>name</th><th>game tag</th><th>screens</th><th>more screens</th><th>video URL</th><th>author</th><th></th><th></th>
 		</form>
 		<?php
 
@@ -563,13 +582,14 @@ class mochiAdminMenu
 					</td>
 					<td><a href="<?php echo $game['author_link'];?>"> <?php echo $game['author'];?></a></td>
 					<td><a href="<?php echo $game['swf_url']?>">play</a></td>
-					<td><form name="<?php echo $game['uuid'];?>" action="edit.php?page=mochiGamesQueue" method="post">
+					<td><form name="_<?php echo $game['game_tag'];?>" action="edit.php?page=mochiGamesQueue" method="post">
 					<?php
 					wp_nonce_field( 'mochimanage', '_wpnonce', true, true );
 					?>
+					<div id="_<?php echo $game['game_tag'];?>"></div>
 					<input type="hidden" name="game_tag" value="<?php echo $game['game_tag'];?>" />
 					<input type="hidden" name="mochi_list" value="<?php echo $_REQUEST['mochi_list'];?>"/>
-					<input type="hidden" name="thumbnailSize" value="<?php echo $_REQUEST['thumbnailSize'];?>"/>
+					<input type="hidden" name="thumbnailSize" value="<?php echo $thumbnailSize?>"/>
 					<input type="submit" name="mochi_action" value="delete" /><br/>
 						<?php
 						if($game['posted'])
@@ -588,7 +608,7 @@ class mochiAdminMenu
 
 						?>
 					</form>
-						<form action="post.php?post=<?php echo $postID;?>&action=edit" method="post"><br/>
+						<form name="moo" action="post.php?post=<?php echo $postID;?>&action=edit" method="post"><br/>
 						<?php
 						wp_nonce_field( 'edit', '_wpnonce', true, true );
 						?>
