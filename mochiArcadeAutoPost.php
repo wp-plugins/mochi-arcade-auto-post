@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.1.0
+Version: 1.1.1
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2
@@ -39,6 +39,7 @@ new mochiArcadeAutoPost;
 class mochiArcadeAutoPost
 {
 	public $mochiAutoPostOptions;	//variable to store options class
+	public $theMochiAdminMenu;
 	public $pluginName;			//the name of this plugin
 	public $mochiDB;		//stores current database information
 	public $implode_funcs;
@@ -63,7 +64,7 @@ class mochiArcadeAutoPost
 			//register activation and deactivation hooks to create and remove database entries
 			register_activation_hook(__FILE__,array(&$this, 'databaseInstall'));
 			//create class instance of options class
-			$this->mochiAutoPostOptions = new mAAPOptions($this->pluginName);
+			$this->mochiAutoPostOptions = new mAAPOptions($this->pluginName, $this);
 			//filter to add game_tag to accepted query vars
 			add_filter('query_vars',array(&$this, 'initQuery'));
 			//action to add a game to the queue
@@ -74,9 +75,9 @@ class mochiArcadeAutoPost
 			}
 			else
 			{
-				new mochiAdminMenu($this);
 				add_action('wp_loaded', array(&$this, 'runUpdate'), 0);
 			}
+			$this->theMochiAdminMenu = new mochiAdminMenu($this);
 
 			if($this->mochiAutoPostOptions->options['gamesOnHomePage'] == 'no')
 					add_filter('pre_get_posts', array(&$this, 'hideGames'));
@@ -201,6 +202,71 @@ class mochiArcadeAutoPost
 //		if (is_front_page())
 //			query_posts('tag__not_in=mAAPBS');
 	}
+	//This function will fetch known games from the database
+	//and also add unknown games to the database.
+	//This is a much smoother way to degrade when a game_tag that isn't
+	//in the database is found, particularly if it is a valid game_tag.
+	//@params $game_tag a valid game_tag
+	//@return an associative array of a game's database entry.
+	public function getGame($game_tag, $type = mochiAdminMenu::autoAdded)
+	{
+		global $wpdb;
+		$game = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->mochiDB['table_name']} WHERE game_tag = %s", $game_tag), ARRAY_A);
+
+		if($game['game_tag'] != '')
+		{
+			return $game;
+		}
+		else
+		{
+			$urlrequest = 'http://www.mochiads.com/feeds/games/'.$this->mochiAutoPostOptions->options['publisher_id'].'/'.$game_tag.'/?format=json';
+			$gamearr = file_get_contents($urlrequest);
+			//$game['gamejson'] = $gamearr;
+			$gamearr = json_decode($gamearr, true);
+			if(!empty($gamearr['games']))
+			{
+				$game = $gamearr['games'][0];
+				$game['generated'] = current_time('mysql');
+
+				//the following are sent as arrays, and need to be imploded into strings
+				$game['tags'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['tags']);
+				$game['controls'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['controls']);
+				$game['languages'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['languages']);
+				$game['categories'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['categories']);
+				$game['posted'] = $this->theMochiAdminMenu->stringToPosted($type);
+				$this->addToDB($game, $type);
+			}
+			else
+			{
+				$event = 'Empty games array returned by mochi';
+				if(strlen($game_tag) != 16)
+				{
+					$cause = 'The plugin encountered an <strong>invalid game tag</strong>';
+					$info = 'game_tag:'.htmlspecialchars($game_tag, ENT_QUOTES);
+				}
+				else
+				{
+					$urlrequest = 'http://www.mochimedia.com/feeds/games/'.$this->mochiAutoPostOptions->options['publisher_id'].'?format=json&limit=1';
+					$gamearr = file_get_contents($urlrequest);
+					$gamearr = json_decode($gamearr);
+					if(empty($gamearr->games))
+					{
+						$cause = '<strong>Invalid publisher ID</strong> on options page';
+						$info = 'publisher ID:'.htmlspecialchars($this->mochiAutoPostOptions->options['publisher_id'], ENT_QUOTES);
+					}
+					else
+					{
+						$cause = 'The plugin encountered an <strong>invalid game tag</strong>';
+						$info = 'game_tag:'.htmlspecialchars($game_tag, ENT_QUOTES);
+						
+					}
+				}
+				$game = null;
+				$this->theMochiAdminMenu->addLogItem($event,$cause,$info);
+			}
+		}
+		return $game;
+	}
 	/*
 	 * What I consider the plugin's main function, requests game info from mochi
 	 * and adds games to the wordpress database in a new table (created by this plugin)
@@ -208,27 +274,12 @@ class mochiArcadeAutoPost
 	public function runPlugin($query)
 	{
 		//gets the game tag from the query
-		$gameTag = get_query_var('game_tag');
+		$game_tag = get_query_var('game_tag');
 		$maappw = get_query_var('maappw');
-		
 		//checks if game_tag was set
-		if($gameTag != '' && $maappw == $this->mochiAutoPostOptions->options['maappw'])
+		if($game_tag != '' && $maappw == $this->theMochiAdminMenu->_sanitize_title(rawurlencode($this->mochiAutoPostOptions->options['maappw'])))
 		{
-			$urlrequest = 'http://www.mochiads.com/feeds/games/'.$this->mochiAutoPostOptions->options['publisher_id'].'/'.$gameTag.'/?format=json';
-			$gamearr = file_get_contents($urlrequest);
-			//$game['gamejson'] = $gamearr;
-			$gamearr = json_decode($gamearr, true);
-			$game = $gamearr['games'][0];
-			$game['generated'] = $gamearr['generated'];
-			$game['posted'] = 0;
-
-			//the following are sent as arrays, and need to be imploded into strings
-			$game['tags'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['tags']);
-			$game['controls'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['controls']);
-			$game['languages'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['languages']);
-			$game['categories'] = $this->implode_funcs->implode_assoc_r2("=","\n",0,$game['categories']);
-
-			$this->addToDB($game);
+			$this->getGame($game_tag, mochiAdminMenu::unposted);
 			//TODO: Add mochi publisher secret key to options page
 			//TODO: Store HIGHSCORES in user metadata
 			//TODO: Use mochi API to create a system that suggests games to upload based on tags
@@ -238,6 +289,23 @@ class mochiArcadeAutoPost
 			//TODO: Create a system to rate games (thumbs up/thumbs down)
 			exit();
 		}
+		else
+		{
+			if($maappw != $this->mochiAutoPostOptions->options['maappw'] && $game_tag != '')
+			{
+				$event = 'Attempt to add a game with an invalid password';
+				$cause = 'maappw set incorrectly on the auto post url in your mochi publisher settings (it should be the password in your mochi arcade auto post options page) <br/><strong>OR</strong><br/> someone unauthorized is attempting to post games to your site';
+				$info = 'password given:'.htmlspecialchars($maappw, ENT_QUOTES);;
+				$this->theMochiAdminMenu->addLogItem($event,$cause,$info);
+				header('Status: 403 Forbidden');
+				header('HTTP/1.1 403 Forbidden');
+				exit();
+			}
+			if($game_tag == '')
+			{
+
+			}
+		}
 		return $query;
 	}
 	/*
@@ -245,29 +313,27 @@ class mochiArcadeAutoPost
 	 * was already there, if it was checks to see if the new data was updated
 	 * if the data is newer, set updateavailable flag
 	 */
-	public function addToDB($game)
+	public function addToDB($game, $type = mochiAdminMenu::autoAdded)
 	{
 		global $wpdb;
-		//parse $game so it matches database structure
-		if(isset($game))
+		$currentGame = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->mochiDB['table_name']} WHERE game_tag = %s", $game['game_tag']));
+		//check if game exists in database, also check if mochi returned a game
+		if($currentGame['game_tag'] == NULL)
 		{
-			foreach ($game as &$key)
+			if($game['game_tag'] != '')
 			{
-				if (!isset($key))
-				{
-					$key = '';
-				}
-			}
-			$currentGame = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->mochiDB['table_name']} WHERE game_tag = %s", $game['game_tag']));
-			//check if game exists in database, also check if mochi returned a game
-			if($currentGame['game_tag'] == NULL && $game['game_tag'] != '')
 				$wpdb->insert($this->mochiDB['table_name'], $game);
-			else if($currentGame->updated < $game['updated'] && $game['game_tag'] != '')
+			}
+		}
+		else
+		{
+			if($currentGame->updated < $game['updated'] && $game['game_tag'] != '')
 			{
 				$game['updateAvailable'] = 1;
 				$wpdb->update($this->mochiDB['table_name'], array ( 'update available' => 1), array('game_tag' => $game['game_tag']));
 			}
 		}
+		return $game;
 	}
 	public function databaseInstall()
 	{

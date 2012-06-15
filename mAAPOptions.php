@@ -7,10 +7,12 @@ class mAAPOptions
 {
 	public $options;
 	private $pluginName;
-	public function mAAPOptions($pluginName) //mAAPOptions constructor
+	public $parent;
+	public function mAAPOptions($pluginName, $theParent = null) //mAAPOptions constructor
 	{
 		//initializes the plugin by adding actions and filters
 		//get current options.
+		$this->parent = $theParent;
 		$this->pluginName = $pluginName;
 		$this->options = get_option($this->pluginName.'Options');
 		//Make it a valid array for below functions even if get_option returned nothing
@@ -43,6 +45,8 @@ class mAAPOptions
 			$this->options['screenThumbWidth'] = '64';
 		if(!array_key_exists('screenThumbHeight', $this->options))
 			$this->options['screenThumbHeight'] = '64';
+		if(!array_key_exists('noScript', $this->options))
+			$this->options['noScript'] = '';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -119,7 +123,7 @@ class mAAPOptions
 						   '<strong>password</strong>',		//field title
 							array(&$this, 'setMAAPPW'),		//callback to display form elements
 							$this->pluginName.'OptionsPage',//Page ID
-						   'mochiAPGeneral');				//Section ID
+						   'mochiAPPublisherData');				//Section ID
 
 		add_settings_field('primCat',						//field ID
 						   'Game categories',				//field title
@@ -165,7 +169,7 @@ class mAAPOptions
 							'What size thumbnails to prefer?',	//field title
 							array(&$this, 'thumbnailSize'),		//callback to display form elements
 							$this->pluginName.'OptionsPage',//page ID
-							'postOpts'			//Section ID
+							'pictures'			//Section ID
 							);
 
 		add_settings_field('adCode(s)',						//field ID
@@ -191,15 +195,14 @@ class mAAPOptions
 	{
 		?>
 		<p>
-			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbSize]" value="large"<?php if($this->options['thumbSize']=='large') echo ' checked'; ?>/> Large
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbSize]" value="large"<?php if($this->options['thumbSize']=='large') echo ' checked'; ?>/> Large (200x200 px)
 		</p>
 		<p>
-			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbSize]" value="small"<?php if($this->options['thumbSize']=='small') echo ' checked'; ?>/> Small
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbSize]" value="small"<?php if($this->options['thumbSize']=='small') echo ' checked'; ?>/> Small (100x100 px)
 		</p>
 		<p>
-			Which size thumbnails should the plugin prefer?<br/>
-			A small and a large thumbnail is available for each game <br/>
-			They sometimes differ in ways other than size
+			Sets the default size thumbnails to use, all thumbnails will be stretched or shrunk to fit this size.<br/>
+			Large is usually suggested.
 		</p>
 		<?php
 	}
@@ -315,16 +318,40 @@ class mAAPOptions
 	public function setMAAPPW()
 	{
 		?>
+		<script type="text/javascript">
+		function updateMochiLink(updateTo)
+		{
+			var updateThis = document.getElementById('mochiLink');
+			var newVal = escape(updateTo.value);
+			newVal = sanitize(newVal);
+			updateThis.value = '<?php echo plugins_url('mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=', dirname(__FILE__));?>' + newVal;
+		}
+		function selectMochiLink(updateTo)
+		{
+			var updateThis = document.getElementById('mochiLink');
+			var newVal = escape(updateTo.value);
+			newVal = sanitize(newVal);
+			updateThis.value = '<?php echo plugins_url('mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=', dirname(__FILE__));?>' + newVal;
+			updateThis.select();
+		}
+		function sanitize(someText)
+		{
+			someText = someText.replace(/%20/g,'-');
+			someText = someText.replace(/%/g, '');
+			return someText;
+		}
+		</script>
 		<p>
-			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[maappw]';?>" value="<?php echo $this->options['maappw'];?>" />
+			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[maappw]';?>" value="<?php echo $this->options['maappw'];?>" onblur="selectMochiLink(this);"onkeyup="updateMochiLink(this);"/>
 		</p>
 		<p>This is a unique password to prevent unauthorized users from adding mochi games to your games queue.</p>
 
 		<?php
 		$uri = plugins_url('mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=', dirname(__FILE__));
-		$uri .= $this->options['maappw'];
+		$uri .= $this->parent->theMochiAdminMenu->_sanitize_title(rawurlencode($this->options['maappw']));
 		?>
-		<p>Copy and paste <code><?php echo $uri;?></code> to your <a href="https://www.mochimedia.com/pub/settings">Mochimedia publisher settings</a> page auto post url textbox, and change Auto Post Method to `Custom built script`.</p>
+		<p>Copy and paste <textarea rows="2" cols="100" name="Options[mochiLink]" id="mochiLink" readonly="readonly">
+<?php echo $uri;?></textarea> to your <a href="https://www.mochimedia.com/pub/settings"Mochimedia publisher settings</a> page auto post url textbox, and change Auto Post Method to `Custom built script`.</p>
 		<?php
 	}
 	public function generalText()

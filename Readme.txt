@@ -62,6 +62,35 @@ You need to add some games!
 
 == Changelog ==
 
+= 1.1.1 =
+* Thumbnail sizes are now normalized based on settings. (All thumbnails will be displayed at the same size regardless of actual image size)
+* If a valid game_tag is encountered that was not previously added to the system, the game details will be downloaded automatically, and can be found in the game queue under "suggested" games (the swf and images won't be downloaded unless the game is explicitly posted though)
+* Navigation in the game queue is now handled by a pull down menu
+* Enhanced support for people with javascript disabled
+* Images/swfs fall back to stored mochi urls if not otherwise available (in the case of the swf this may prevent you from being paid for that game, so make sure every game has a post!(Any post created by the plugin will automatically have downloaded the swf))
+* Setting noad=true to prevent your adcode (in settings) from appearing no longer results in an unclosed div
+* Games queue now shows whether or not the game was posted/how it got in the system
+* Games queue now shows the time a game was added
+* All thumbnails are now shown at small size on the games queue to save space
+* Reposting a game now deletes that game entirely, and completely refetches it, preventing duplicate posts/swfs/images
+* noad=false and flashscreen=keep are now automatically added to mochigame shortcodes created by the plugin, these are their default values anyway, but will make their existence more well known
+* Added an error log, accessible from the admin menu tools->Mochi Log
+* m-DONT CHANGE: excerpt now ignores what's after the colon, and processes the post that the excerpt belongs to for mochigame shortcodes, left the game tags in place, but they are no longer required
+* Tables now have CSS to make them look nicer
+* Further optimizations to allow for slimmer resolutions on the games queue page, screenshots are now all in one table element, but still side-by-side unless there isn't enough room
+* Introducing JAVASCRIPT (all of the following requires javascript enabled)
+* Added FlashScreen - a button to blow up the swf without changing its aspect ratio, it approximates fullscreen as close as possible, using HTML5 methods when available
+* Added flashscreen option to shortcode, use false to prevent it showing up (not all games support changing their size well, simply add flashscreen=false if you find one that does funny things when you blow it up)
+* flashscreen=deform will stretch the flash to fit the screen even if it would deform the swf
+* flashscreen=keep will prevent deforming the flash (default)
+* flashscreen=stage3d OR false will embed the flash in direct mode, but also disable flashscreen
+* flashscreen=stagescreen will embed in direct mode, and keep flashscreen, but it should be noted that users may have trouble exiting fullscreen mode
+* flashscreen will be improved upon as soon as possible.
+* Changing the thumbnail to download for a game no longer requires a page refresh (if javascript is enabled)
+* Games queue can now be sorted by clicking on the headers of the table
+* The page is automatically reloaded after performing any action that might be accidentally repeated on page refresh
+
+
 = 1.1.0 =
 * Screenshots and thumbnails will now always be downloaded for each game
 * If no unposted games are found, the admin menu will go to posted view
