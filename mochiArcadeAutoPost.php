@@ -3,7 +3,7 @@
 Plugin Name: Mochi Arcade Auto Post
 Plugin URI: http://www.bionicsquirrels.com/mochi-arcade-auto-post/
 Description: This plugin is for Mochi publishers, it allows you to use the "post game to your site" button with wordpress.
-Version: 1.1.1
+Version: 1.1.45
 Author: Daniel Billings
 Author URI: http://www.bionicsquirrels.com
 License: GPLv2
@@ -43,6 +43,10 @@ class mochiArcadeAutoPost
 	public $pluginName;			//the name of this plugin
 	public $mochiDB;		//stores current database information
 	public $implode_funcs;
+    public $mochiGameTag;
+	public $divAdded;		//bool that stores wether or not a div was already added
+	public $currentPost;
+	public $maappw;
 	/*
 	 * mochiArcadeAutoPost constructor
 	 * detects how the plugin was accessed,
@@ -52,6 +56,14 @@ class mochiArcadeAutoPost
 	 */
     public function mochiArcadeAutoPost() 
 	{
+		if(isset($_REQUEST['game_tag']))
+			$this->mochiGameTag = $_REQUEST['game_tag'];
+		else
+			$this->mochiGameTag = '';
+		if(isset($_REQUEST['maappw']))
+			$this->maappw = $_REQUEST['maappw'];
+		else
+			$this->maappw = '';
 		if(function_exists('add_action'))
 		{
 			global $wpdb;
@@ -71,6 +83,7 @@ class mochiArcadeAutoPost
 			new mochiShortCodes($this);
 			if(!is_admin())
 			{
+				//add_action('init', array(&$this, 'fetchData'), 0);
 				add_action('pre_get_posts', array(&$this, 'runPlugin'), 0);
 			}
 			else
@@ -81,14 +94,16 @@ class mochiArcadeAutoPost
 
 			if($this->mochiAutoPostOptions->options['gamesOnHomePage'] == 'no')
 					add_filter('pre_get_posts', array(&$this, 'hideGames'));
-
+			add_filter('the_title', array(&$this, 'addDivTitle'));
+			add_action('template_redirect', array(&$this, 'retrievePostID'));
 
 			//load_plugin_textdomain($this->pluginName, false, basename( dirname( __FILE__ ) ) . '/languages' );
 		}
 		else
 		{
-			//if plugin was accessed directly with a game_tag, it was probably mochi
-			//but that's not too secure, so lets find out if it was mochi
+			//Left in for compatibility with old settings
+			//This will run if the plugin page was accessed directly
+			//New method works on any wordpress page
 			if(isset($_REQUEST['game_tag']))
 			{
 				//get the host name
@@ -134,9 +149,85 @@ class mochiArcadeAutoPost
 			}
 		}
 	}
+	public function retrievePostID()
+	{
+		global $wp_query;
+		$this->currentPost = $wp_query->get_queried_object_id();
+	}
+	public function addDivTitle($title, $post_id = NULL)
+	{
+		if(is_single())
+		{
+			$title1 = $title;
+			if($post_id === NULL)
+			{
+				$post_id = $GLOBALS['post']->ID;
+			}
+			if (in_the_loop() && is_main_query() && !$this->divAdded)
+			{
+				if($post_id === NULL)
+				{
+					$post_id = get_the_ID();
+				}
+				if ($post_id === $this->currentPost)
+				if($this->mochiAutoPostOptions->options['thumbnailTitle'] != 'off')
+				{
+					$title1 = '<div id="mochiTitle" style="width:';
+					//reserve some space on the dom
+					if($this->mochiAutoPostOptions->options['thumbnailTitle'] == 'large')
+						$title1 .= '200px;height:200px;"';
+					else
+						$title1 .= '100px;height:100px;"';
+					$title1 .= '><!-- image div --></div>'.$title;
+					$this->divAdded = true;
+				}
+			}
+		}
+		return $title1;
+	}
+	public function fetchData()
+	{
+		if(isset($_REQUEST['game_tag']))
+			$this->mochiGameTag = $_REQUEST['game_tag'];
+		else
+			$this->mochiGameTag = '';
+		if(isset($_REQUEST['maappw']))
+			$this->maappw = $_REQUEST['maappw'];
+		else
+			$this->maappw = '';
+	}
+	public function updateDB()
+	{
+		global $wpdb;
+		if(strcmp($this->mochiDB['DB_version'], "1.2.0") < 0 && current_user_can('manage_games'))
+		{
+			$sql1 = "ALTER TABLE {$this->mochiDB['table_name']} ADD stage3d TINYINT;";
+			$sql2 = "ALTER TABLE {$this->mochiDB['table_name']} ADD additional_data TEXT;";
+			update_option('mochiDB', array('DB_version' => '1.2.0', 'table_name' => $wpdb->prefix.$this->pluginName));
+			try
+			{
+			//Yes, one query would be more efficient, but some users have likely already worked around this bug
+			//and as a courtesy to them I'm making TWO sql statements, if sql1 throws an exception because the 
+			//table already exists, sql2 will still go through, and properly update the DB to the latest version
+			//Apparently wpdb handles those sql exceptions, so the try/catch is pretty useless... Gonna leave it in anyway just in case
+				$wpdb->query($sql2);
+				$wpdb->query($sql1);
+			}
+			catch(Exception $e)
+			{
+				//Add exception to mochi log
+				$event = $e->getMessage();
+				$info = $e->__toString();
+				$cause = 'Most likely you added the "stage3d" column already so that the plugin worked, if that\'s the case you can safely ignore this error';
+				$this->theMochiAdminMenu->addLogItem($event, $cause, $info);
+			}
+		}
+	}
 	public function runUpdate()
 	{
-		if($this->mochiDB['DB_version'] != '1.1.0' && current_user_can('manage_games'))
+		
+		
+		if(strcmp($this->mochiDB['DB_version'], "1.1.0") < 0 && current_user_can('manage_games'))
 		{
 			global $wpdb;
 			global $wp_query;
@@ -162,6 +253,7 @@ class mochiArcadeAutoPost
 			}
 			update_option('mochiDB', array('DB_version' => '1.1.0', 'table_name' => $wpdb->prefix.$this->pluginName));
 		}
+		$this->updateDB();
 	}
 	/*
 	 * Get a visitor's IP address
@@ -193,11 +285,17 @@ class mochiArcadeAutoPost
 		$queryVars[] = 'thumbnailSize';
 		return $queryVars;
 	}
+	/*
+	 * Adds a parameter to wordpress' home posts query, removing game posts from the home page
+	 * preventing clutter (may be turned on and off in options)
+	 */
 	public function hideGames($query)
 	{
 		$tag = get_term_by('slug', 'maapbs', 'post_tag');
-		if($query->is_home)
-			$query->query_vars['tag__not_in'] = array($tag->term_id);
+		//Note: Games will still show in recent posts/comments widgets, there are more advanced widgets available in the plugin repository that could be set to filter out the mAAPBS tag, or flash games category.  The mAAPBS tag is added to every post created by the plugin, so it's a tad more "targeted" than the flash games category, you know, should you happen to write an article on a flash game...
+		if($query->is_home && 
+			($this->mochiAutoPostOptions->options['hideGamesOnHomeWidgets'] == 'on' || $query->is_main_query()))
+			array_push($query->query_vars['tag__not_in'], $tag->term_id);
 		//wp_reset_query();
 //		if (is_front_page())
 //			query_posts('tag__not_in=mAAPBS');
@@ -219,6 +317,7 @@ class mochiArcadeAutoPost
 		}
 		else
 		{
+			
 			$urlrequest = 'http://www.mochiads.com/feeds/games/'.$this->mochiAutoPostOptions->options['publisher_id'].'/'.$game_tag.'/?format=json';
 			$gamearr = file_get_contents($urlrequest);
 			//$game['gamejson'] = $gamearr;
@@ -274,8 +373,9 @@ class mochiArcadeAutoPost
 	public function runPlugin($query)
 	{
 		//gets the game tag from the query
-		$game_tag = get_query_var('game_tag');
-		$maappw = get_query_var('maappw');
+		$game_tag = $this->mochiGameTag;
+		
+		$maappw = $this->maappw;
 		//checks if game_tag was set
 		if($game_tag != '' && $maappw == $this->theMochiAdminMenu->_sanitize_title(rawurlencode($this->mochiAutoPostOptions->options['maappw'])))
 		{
@@ -316,7 +416,26 @@ class mochiArcadeAutoPost
 	public function addToDB($game, $type = mochiAdminMenu::autoAdded)
 	{
 		global $wpdb;
+		$temp = array();
 		$currentGame = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$this->mochiDB['table_name']} WHERE game_tag = %s", $game['game_tag']));
+		$columnNames = $wpdb->get_col("select column_name from information_schema.columns where table_name='{$this->mochiDB['table_name']}';");
+		$columnNames = array_fill_keys($columnNames, NULL);
+		//check that all columns, and add a column if necessary
+		foreach($game as $columnName => $column)
+		{
+			//check for unknown keys, or if mochi suddenly add a key called 'additional_data' check for that too
+			if(!array_key_exists(strtolower($columnName), array_change_key_case($columnNames)) || $columnName == 'additional_data')
+			{
+				//split off unknown keys
+				$temp[$columnName] = $game[$columnName];
+				unset($game[$columnName]);
+			}
+			if(count($temp) > 0)
+			{
+				//add unknown keys to known key "additional data"
+				$game['additional_data'] = json_encode($temp);
+			}
+		}
 		//check if game exists in database, also check if mochi returned a game
 		if($currentGame['game_tag'] == NULL)
 		{

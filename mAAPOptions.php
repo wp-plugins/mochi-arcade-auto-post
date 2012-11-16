@@ -19,6 +19,9 @@ class mAAPOptions
 		$this->options['initialized'] = true;
 
 		//set defaults
+		//I realize this is an odd way to do this, rather than setting the options in the install script
+		//It could be more efficient too, but the performance impact is negligible.  I wrote it when I didn't
+		//quite fully understand the options api yet, and I'm lazy to change it.
 		if(!array_key_exists('autoPostSWF', $this->options))
 			$this->options['autoPostSWF'] = 'page';
 		if(!array_key_exists('publisher_id', $this->options))
@@ -47,6 +50,10 @@ class mAAPOptions
 			$this->options['screenThumbHeight'] = '64';
 		if(!array_key_exists('noScript', $this->options))
 			$this->options['noScript'] = '';
+		if(!array_key_exists('hideGamesOnHomeWidgets', $this->options))
+			$this->options['hideGamesOnHomeWidgets'] = 'off';
+		if(!array_key_exists('thumbnailTitle', $this->options))
+			$this->options['thumbnailTitle'] = 'off';
 		add_action('admin_menu', array(&$this, 'createSettingsPage'));
 		add_action('admin_init', array(&$this, 'createSettingsFields'));
 
@@ -105,7 +112,12 @@ class mAAPOptions
 							  array(&$this, 'postOps'),			//Displays in section
 							 $this->pluginName.'OptionsPage');		//settings page id
 
-
+//JPL-849 in-development feature, uncomment to enable at your own risk (currently also in the wrong section of settings)
+/*		add_settings_field('titlePics',							//field ID
+						   'Post game thumbnail before title?',	//field title
+						   array(&$this, 'thumbTitle'),			//callback to display input box
+						   $this->pluginName.'OptionsPage',		//Page ID
+						   'postOpts');			*/				//Section ID
 
 		add_settings_field('mochiPublisherID',				//field ID
 						   'Mochi Publisher ID',			//field title
@@ -178,6 +190,26 @@ class mAAPOptions
 							$this->pluginName.'OptionsPage',//Page ID
 						   'mochiAPGeneral');
 	}
+	public function thumbTitle()
+	{
+		?>
+		<p>
+			<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbnailTitle]" value="large"<?php if($this->options['thumbnailTitle']=='large') echo ' checked'; ?>/> Large (200x200 px)
+		</p>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbnailTitle]" value="small"<?php if($this->options['thumbnailTitle']=='small') echo ' checked'; ?>/> Small (100x100 px)
+		</p>
+		<p>
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[thumbnailTitle]" value="off"<?php if($this->options['thumbnailTitle']=='off') echo ' checked'; ?>/> Off
+		</p>
+		<p>
+			This will place the game's thumbnail next to the title, currently it may not work properly in all themes, as it doesn't yet know how to differentiate between posts.  (eg. navigation links may get the image instead of the current post's title)<br/>
+			The next patch will include a better targeted image, for now it's recommended that you set this to off. (may reserve space for the image in multiple places, although only one image will exist)
+		</p>
+		</p>
+		<?php
+	}
 	public function screenshotThumbSize()
 	{
 		?>
@@ -238,7 +270,8 @@ class mAAPOptions
 	{
 		?>
 		<p>
-			<input type="text" id="adCode" name="<?php echo $this->pluginName.'Options[adCode]';?>" value="<?php echo $this->options['adCode'];?>" /> This will be placed 150px below your games<br/>
+			<textarea rows="10" cols="70" name="<?php echo $this->pluginName.'Options[adCode]';?>"><?php echo $this->options['adCode'];?></textarea>
+			<br/>This will be placed 150px below your games<br/><br/>
 			<strong>IMPORTANT:</strong> Google adsense recommends placing ads no less than 150px away from flash games, if you get a lot of
 			what they determine to be accidental clicks they will suspend your account regardless of whether you followed that recommendation
 			or not.  The above box will be inserted 150px below your flash game on the page as recommended, but you will be responsible for
@@ -308,51 +341,63 @@ class mAAPOptions
 			<input type="radio" name="<?php echo $this->pluginName; ?>Options[gamesOnHomePage]" value="yes"<?php if($this->options['gamesOnHomePage']=='yes') echo ' checked'; ?>/> Show on home page
 		</p>
 		<p>
-			<input type="radio" name="<?php echo $this->pluginName; ?>Options[gamesOnHomePage]" value="no"<?php if($this->options['gamesOnHomePage']=='no') echo ' checked'; ?>/> Hide on home page
+			<input type="radio" name="<?php echo $this->pluginName; ?>Options[gamesOnHomePage]" value="no"<?php if($this->options['gamesOnHomePage']=='no') echo ' checked'; ?>/> Hide on home page <br/>
+			<input type="checkbox" name="<?php echo $this->pluginName; ?>Options[hideGamesOnHomeWidgets]"<?php if($this->options['hideGamesOnHomeWidgets']=='on') echo ' checked'; ?>/> Also prevent widgets from showing games on the home page
 		</p>
 		<p>
-			Games can still be accessed through categories, with the category stub "flash-games" containing all of them as sub categories.
+			Games can still be accessed through categories, with the category stub "flash-games" containing all of them as sub categories.<br/>
 		</p>
 		<?php
 	}
 	public function setMAAPPW()
 	{
+		$blogUrl = get_bloginfo('url', 'raw');
 		?>
+		
+		<p>
 		<script type="text/javascript">
 		function updateMochiLink(updateTo)
 		{
 			var updateThis = document.getElementById('mochiLink');
 			var newVal = escape(updateTo.value);
 			newVal = sanitize(newVal);
-			updateThis.value = '<?php echo plugins_url('mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=', dirname(__FILE__));?>' + newVal;
+			updateThis.value = '<?php echo $blogUrl.'/?maappw=';?>' + newVal;
 		}
 		function selectMochiLink(updateTo)
 		{
 			var updateThis = document.getElementById('mochiLink');
 			var newVal = escape(updateTo.value);
 			newVal = sanitize(newVal);
-			updateThis.value = '<?php echo plugins_url('mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=', dirname(__FILE__));?>' + newVal;
+			updateThis.value = '<?php echo $blogUrl.'/?maappw=';?>' + newVal;
 			updateThis.select();
 		}
 		function sanitize(someText)
 		{
 			someText = someText.replace(/%20/g,'-');
+			someText = someText.replace(/\*/g,'2A');
+			someText = someText.replace(/@/g,'40');
+			someText = someText.replace(/\//g,'2F');
+			someText = someText.replace(/\+/g,'2B');
 			someText = someText.replace(/%/g, '');
 			return someText;
 		}
 		</script>
-		<p>
-			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[maappw]';?>" value="<?php echo $this->options['maappw'];?>" onblur="selectMochiLink(this);"onkeyup="updateMochiLink(this);"/>
+			<input type="text" id="maappw" name="<?php echo $this->pluginName.'Options[maappw]';?>" value="<?php echo $this->options['maappw'];?>" onblur="selectMochiLink(this);" onkeyup="updateMochiLink(this);"/>
 		</p>
 		<p>This is a unique password to prevent unauthorized users from adding mochi games to your games queue.</p>
 
 		<?php
-		$uri = plugins_url('mochi-arcade-auto-post/mochiArcadeAutoPost.php?maappw=', dirname(__FILE__));
+		$uri = $blogUrl.'/?maappw=';
 		$uri .= $this->parent->theMochiAdminMenu->_sanitize_title(rawurlencode($this->options['maappw']));
 		?>
-		<p>Copy and paste <textarea rows="2" cols="100" name="Options[mochiLink]" id="mochiLink" readonly="readonly">
-<?php echo $uri;?></textarea> to your <a href="https://www.mochimedia.com/pub/settings"Mochimedia publisher settings</a> page auto post url textbox, and change Auto Post Method to `Custom built script`.</p>
-		<?php
+		<p>Copy and paste <br/><textarea rows="2" cols="100" name="Options[mochiLink]" id="mochiLink" readonly="readonly">
+<?php echo $uri;?></textarea><br/> to your <a href="https://www.mochimedia.com/pub/settings" target="_blank">Mochimedia publisher settings</a> page auto post url textbox, and change Auto Post Method to `Custom built script`. <br/>(Don't forget to click save changes at the bottom of this page)</p>
+		<p>
+			If Mochimedia tells you there is a problem, or the games don't appear, check any spam blocking plugin, such as Bad Behavior for blocked access attempts from mochimedia.net.  Mochimedia uses a python library to make the request that Bad Behavior, among other plugins have blacklisted to help prevent hackers from accessing your site.  If you look through Bad Behavior's log, you should find the attempt from mochi, copy the IP address onto your Bad Behavior white list.  Mochi uses more than one of these IP addresses, so you may need to do this more than once.<br/>
+			Two known mochimedia IPs are: 38.102.129.100, and 38.102.129.101<br/>
+			It will be less secure, but if you don't want to bother with all of these IPs, you can add Python-urllib/2.7 to Bad Behavior's user-agent whitelist, that should unblock all mochi's servers (as well as anyone else using that library).  The security risk of doing this is small, known "bad" IP addresses are blacklisted as well, and the plugin checks for suspicious behavior, but it should be noted anyway, that the most secure method is just to whitelist those two IPs.
+		</p>		
+<?php
 	}
 	public function generalText()
 	{
@@ -381,7 +426,7 @@ class mAAPOptions
 	{
 		//create text box
 		echo '<p><input id=\'mochiPublisherID\' name=\''.$this->pluginName.'Options[publisher_id]\' size=\'40\' type=\'text\' value=\''.$this->options['publisher_id'].'\' />';
-		echo 'Your publisher ID from <a href="https://www.mochimedia.com/pub/settings">Mochimedia</a>';
+		echo 'Your publisher ID from <a href="https://www.mochimedia.com/pub/settings" target="_blank">Mochimedia</a>';
 		echo '<p>To allow communication of high scores and other data, you should also create a file in your website\'s root called crossdomain.xml and paste the following into it <br/>
 		</p><p>
 		<code>

@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=JMX9R
 Tags: mochi,auto post,flash,games
 Requires at least: 3.3.2
 Tested up to: 3.3.2
-Stable tag: 1.1.1
+Stable tag: 1.1.45
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -61,6 +61,16 @@ You need to add some games!
 1. The game queue screen.
 
 == Changelog ==
+
+= 1.1.45 =
+* The plugin works again
+* Added stage3d, and addition_data columns to the plugin's WPDB table
+* Added a check for unrecognized columns, which are json encoded and stored in additional_data (this will prevent the plugin from breaking again if mochi decides to add another incoming column)
+* Added an option to hide games from homepage widgets as well as the home page itself (will only do so on the home page... Needs more work)
+* The plugin no longer requires mochi to access its plugin page directly, the deprecated functionality will be removed in a later patch (update your mochimedia publisher settings accordingly)
+* refetch/repost link has been repaired, this will delete all data (including the post) about a game, and repost it as a pending (not published) post.
+* Numerous other small bug fixes and usability enhancements that probably nobody will notice but me :P
+* A currently in-development feature is included which adds the game's thumbnail to the post title, it's unfinished but may work on some themes, to enable it, open up mAAPOptions.php, use find, and type in JPL-849, below it you'll find a second of code that's been commented out, uncomment it by removing the /* and */ from that code. That will allow you to see the option in your settings page, try it out, see if it works as expected in your theme, if not, turning it back to off is recommended (no need to re-comment it)
 
 = 1.1.1 =
 * Thumbnail sizes are now normalized based on settings. (All thumbnails will be displayed at the same size regardless of actual image size)

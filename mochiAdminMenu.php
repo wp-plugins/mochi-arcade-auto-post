@@ -141,7 +141,7 @@ class mochiAdminMenu
 				else die('Invalid NONCE');
 				$backToList = true;
 			}
-			if($_REQUEST['mochi_action'] == 'repost')
+			if($_REQUEST['mochi_action'] == 'refetch/repost')
 			{
 				if(check_admin_referer('mochimanage'))
 				{
@@ -340,8 +340,6 @@ class mochiAdminMenu
 					$url = $game[0]['thumbail_large_url'];
 				}
 			}
-			
-
 			//setup post array
 			if($publish)
 			{
@@ -465,6 +463,8 @@ class mochiAdminMenu
 	public function _sanitize_title($string)
 	{
 		$string = str_replace('%20','-', $string);
+		$string = str_replace('*','2A', $string);
+		$string = str_replace('@','40', $string);
 		$string = str_replace('%', '', $string);
 		return $string;
 	}

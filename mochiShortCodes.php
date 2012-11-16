@@ -470,6 +470,77 @@ class mochiShortCodes
 				}
 			}
 			$output .= $content;
+			if(is_single() && $this->parent->mochiAutoPostOptions->options['thumbnailTitle'] != 'off')
+			{
+				$src = '';
+				$args = array(
+					'post_parent' => $game['post_ID'],
+					'post_type' => 'attachment',
+					'post_mime_type' => 'image'
+							);
+				if($game['post_ID'] != NULL && $game['post_ID'] != 0)
+					$attachments = get_children($args, ARRAY_A);
+				$thumbID = get_post_thumbnail_id($game['post_ID']);
+				$count = 0;
+				if($thumbID != NULL)
+				{
+					$src .= '<a href="'.get_permalink().'">';
+					if($this->parent->mochiAutoPostOptions->options['thumbnailTitle'] == 'large')
+					{
+						$src .= '<img src="'.wp_get_attachment_url($thumbID).'"  alt="Splash of '.(string)$game['name'].'" title="Splash of '.(string)$game['name'].'" style="height:200px;width:200px;"/>';
+					}
+					else
+					{
+						$src .= '<img src="'.wp_get_attachment_url($thumbID).'"  alt="Splash of '.(string)$game['name'].'" title="Splash of '.(string)$game['name'].'" style="height:100px;width:100px;"/>';
+					}
+					$src .= '</a></br>';
+				}
+				else
+				{
+					$thumbLarge = $game['thumbnail_large_url'];
+					$thumbSmall = $game['thumbnail_url'];
+					$src .= '<a href="'.get_permalink().'">';
+					if($this->parent->mochiAutoPostOptions->options['thumbnailTitle'] == 'large')
+					{
+
+						if($thumbLarge != '')
+						{
+
+							$src .= '<img src="'.$thumbLarge.'"  alt="Splash of '.(string)$game['name'].'" title="Splash of '.(string)$game['name'].'" style="height:200px;width:200px;"/>';
+
+						}
+						else
+						{
+							$src .= '<img src="'.$thumbSmall.'"  alt="Splash of '.(string)$game['name'].'" title="Splash of '.(string)$game['name'].'" style="height:200px;width:200px;"/>';
+						}
+
+					}
+					else
+					{
+						if($thumbSmall != '')
+						{
+
+							$src .= '<img src="'.$thumbSmall.'"  alt="Splash of '.(string)$game['name'].'" title="Splash of '.(string)$game['name'].'" style="
+								height:100px;
+								width:100px;"/>';
+
+						}
+						else
+						{
+							$src .= '<img src="'.$thumbLarge.'"  alt="Splash of '.(string)$game['name'].'" title="Splash of '.(string)$game['name'].'" style="
+								height:100px;
+								width:100px;"/>';
+						}
+					}
+					$src .= '</a></br>';
+				}
+				if($this->parent->mochiAutoPostOptions->options['thumbnailTitle'] != 'off')
+				$output .= '
+					<script type="text/javascript">
+					var theDiv = document.getElementById("mochiTitle");
+					theDiv.innerHTML =\''.$src.'\';
+					</script>';
+			}
 			return $output;
 		}
 	}
