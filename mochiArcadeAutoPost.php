@@ -156,9 +156,10 @@ class mochiArcadeAutoPost
 	}
 	public function addDivTitle($title, $post_id = NULL)
 	{
+		$title1 = $title;
+			
 		if(is_single())
 		{
-			$title1 = $title;
 			if($post_id === NULL)
 			{
 				$post_id = $GLOBALS['post']->ID;
