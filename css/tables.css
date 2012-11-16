@@ -1,0 +1,47 @@
+/* 
+    Document   : tables
+    Created on : Jun 13, 2012, 7:45:31 PM
+    Author     : Daniel Billings
+    Description:
+        Styles tables in the mochi arcade auto post plugin
+*/
+root
+{ 
+    display: block;
+}
+
+th
+{
+	white-space: nowrap;
+	background-color: firebrick;
+	color: white;
+	cursor: pointer;
+}
+tr:nth-child(odd)
+{
+	background-color: beige;
+}
+tr:nth-child(even)
+{
+	background-color: bisque
+}
+td
+{
+	padding-right:7px;
+	padding-left:7px;
+	border-right-width: 2px;
+	border-right-color: black;
+	border-right-style: solid;
+	vertical-align:top;
+}
+.sortable
+{
+	width:100%;
+	border:0px;
+	border-collapse: collapse;
+	text-align:center;
+}
+.mochiNoWrap
+{
+	white-space: nowrap;
+}
